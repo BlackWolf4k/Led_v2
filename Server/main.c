@@ -67,7 +67,7 @@ void handle_slaves_subprocess()
 
 		new_slave_descriptor = accept( socket_descriptor, ( struct sockaddr* )&address, &address_size );
 
-		pthread_create( &thread_id, NULL, handle_slave, new_slave_descriptor );
+		pthread_create( &thread_id, NULL, handle_slave, &new_slave_descriptor );
 	}
 }
 

@@ -2,9 +2,6 @@
 
 #define BUFFER_SIZE 1024
 
-// File Possible Length:
-// ( 8b * 3 ) * 160 + ( 8b * 160 ) * n
-
 // Create a mutex to lock when file positioning is needed
 pthread_mutex_t mutex;
 
@@ -80,7 +77,7 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 // Returns a status code for success of failure
 uint8_t send_file( const char* animation_file, uint32_t slave_socket );
 
-uint8_t handle_slave( uint32_t socket_descriptor )
+uint8_t* handle_slave( uint32_t socket_descriptor )
 {
 	// Create a buffer to store informations
 	uint8_t* buffer = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
@@ -96,7 +93,7 @@ uint8_t handle_slave( uint32_t socket_descriptor )
 	// Check that the slave research was sucessfull
 
 	// Get next animation
-	char* file_name = get_next_animation( slave.animation_list, slave.actual_animation + 1 );
+	const char* file_name = get_next_animation( slave.animation_list, slave.actual_animation + 1 );
 
 	// Check that the next animation was found
 
@@ -119,10 +116,10 @@ uint8_t handle_slave( uint32_t socket_descriptor )
 
 	/* Start of possible collision zone */
 	// Lock
-	pthread_mutex_lock( mutex );
+	pthread_mutex_lock( &mutex );
 
 	// Unlock
-	pthread_mutex_unlock( mutex );
+	pthread_mutex_unlock( &mutex );
 	/* End of possible collision zone */
 
 	// Close the file
@@ -155,7 +152,7 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 
 	/* Start of possible collision zone */
 	// Lock
-	pthread_mutex_lock( mutex );
+	pthread_mutex_lock( &mutex );
 
 	// Read each element in the file untill slave with corresponding ip is found
 	while ( fread( &slave, sizeof( slave_t ), 1, file ) != 0 )
@@ -174,7 +171,7 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 				fwrite( &slave, sizeof( slave_t ), 1, file );
 			}
 			// Unlock
-			pthread_mutex_unlock( mutex );
+			pthread_mutex_unlock( &mutex );
 
 			// Close the file
 			fclose( file );
@@ -184,7 +181,7 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 	}
 
 	// Unlock
-	pthread_mutex_unlock( mutex );
+	pthread_mutex_unlock( &mutex );
 	/* End of possible collision zone */
 
 	// Close the file
@@ -214,7 +211,7 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 
 	/* Start of possible collision zone */
 	// Lock
-	pthread_mutex_lock( mutex );
+	pthread_mutex_lock( &mutex );
 
 	// Store the file name to return
 	char* file_name = NULL;
@@ -227,7 +224,7 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 			// Count that animation number is valid
 			uint8_t animations = 0;
 
-			for ( uint32_t i = 0; i < strlen( BUFFER_SIZE ); i++ )
+			for ( uint32_t i = 0; i < BUFFER_SIZE; i++ )
 				if ( buffer[i] == ';' )
 					animations += 1;
 			
@@ -237,7 +234,7 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 				// Close the file
 				fclose( file );
 				// Unlock
-				pthread_mutex_unlock( mutex );
+				pthread_mutex_unlock( &mutex );
 				return '\0'; // Return empty string
 			}
 
@@ -246,14 +243,14 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 			// Search the animation
 			for ( int i = 0; i < animation_number; i++ )
 			{
-				file_name = strtok( buffer, ';' );
+				file_name = strtok( buffer, ";" );
 				buffer += strlen( file_name ) + 1;
 			}
 		}
 	}
 
 	// Unlock
-	pthread_mutex_unlock( mutex );
+	pthread_mutex_unlock( &mutex );
 	/* End of possible collision zone */
 
 	// Free the buffer
