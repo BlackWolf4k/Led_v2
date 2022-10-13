@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <string.h>
 
 // Function called by the server
 // Return a status code for success or faiuler

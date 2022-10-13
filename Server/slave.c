@@ -9,11 +9,23 @@
 pthread_mutex_t mutex;
 
 /*
+SLAVE CONNECTION DESCRIPTOR
+id:				the id of the slave
+ip:address:		the ip address of the slave
+*/
+typedef struct
+{
+	uint8_t id;
+	char ip_address[16];
+} slave_connection_t;
+
+/*
 SLAVES DESCRIPTOR:
 id:					identifier of a slave
 actual_animation:	the currently plaing animation
 status:				if waiting for something, or plaing and animation
 animation_list:		the id of the animation list
+ip_address:			ip address of the slave
 */
 typedef struct
 {
@@ -21,9 +33,12 @@ typedef struct
 	uint8_t status;
 	uint8_t animation_list;
 	uint8_t actual_animation;
+	char ip_address[16];
 } slave_t;
 
 /*
+ANIMATION LIST DESCRIPTION:
+list_id;file_name;file_name... ( 50 animations list MAX )
 ANIMATION FILE DESCRIPTION:
 animation_file_descriptor
 led_informations
@@ -37,7 +52,6 @@ number_of_line:		the number of lines in the file
 line_length:		the length of a single line
 repeat:				does the animation repeat
 */
-
 typedef struct
 {
 	uint32_t number_of_lines;
@@ -48,21 +62,19 @@ typedef struct
 // Animation header size ( +1 for the \n )
 #define ANIMATION_HEADER_SIZE ( sizeof( animation_file_descriptor_t ) + 1 )
 
-// Private Function Declarations
-
-// Set buffer valuse to 0;
-void bzero( void* buffer, uint32_t size )
-{
-	for ( uint32_t i = 0; i < size; i++ )
-		( ( uint8_t* )buffer )[i] = ( uint8_t )0;
-}
-
-// 
-uint32_t get_slave_id( char* slave_id );
+/*PRIVATE FUNCTIONS DECLARATION*/
 
 // Get from the slave file the informations about a particular slave
-// It is researched based on the slave's id ( parameter )
-slave_t get_slave( uint32_t slave_id );
+// It is researched based on the slave's id ( parameter ) and the slave's ip address
+// If no slave was found it will return a slave with id -1
+// The id of a slave does not chagne, while the ip can, so the ip may be updated
+slave_t get_slave( uint32_t slave_id, char* ip_address );
+
+// Get the next animation of slave
+// The animation list number and the actual animation are needed
+// The file name of the next animation will be returned
+// If and error occured, an empry string is returned
+const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number );
 
 // Send the animation file to the slave
 // Returns a status code for success of failure
@@ -70,38 +82,186 @@ uint8_t send_file( const char* animation_file, uint32_t slave_socket );
 
 uint8_t handle_slave( uint32_t socket_descriptor )
 {
-	// Alloc a Buffer to store informations
+	// Create a buffer to store informations
 	uint8_t* buffer = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
 
 	// Recive the basic informations from the slave
-	// Informations = "[number( 0 - 9 )]"
 	recv( socket_descriptor, buffer, BUFFER_SIZE, 0 );
 
-	// Alloc array to store ip address
-	char* ip_address = ( char* )calloc( 16, sizeof( uint8_t ) );
+	slave_connection_t slave_connection = *( ( slave_connection_t* )buffer );
 
-	// Copy the ip address of the slave
-	for ( int i = 0; i < 16 && buffer[i] != ';'; i++ )
-		ip_address[i] == buffer[i];
+	// Get the slave descriptor
+	slave_t slave = get_slave( slave_connection.id, slave_connection.ip_address );
 
-	uint32_t slave_id = get_slave_id( buffer );
+	// Check that the slave research was sucessfull
 
-	slave_t slave = get_slave( slave_id );
+	// Get next animation
+	char* file_name = get_next_animation( slave.animation_list, slave.actual_animation + 1 );
 
-	bzero( buffer, BUFFER_SIZE );
+	// Check that the next animation was found
 
-	// Free the buffers
-	free( ip_address );
-	free( buffer );
+	// Send the animation
+	send_file( file_name, socket_descriptor );
+
+	// Check that the sending was sucessfull
+
+	/* Update the slave informations in the file */
+	// Close the connection
+	close( socket_descriptor );
+
+	// Open the file
+	FILE* file = NULL;
+	fopen( "slaves.dat", "rw" );
+
+	// Check that the file opening was sucessfull
+	// if ( file == NULL )
+	// 	return 0;
+
+	/* Start of possible collision zone */
+	// Lock
+	pthread_mutex_lock( mutex );
+
+	// Unlock
+	pthread_mutex_unlock( mutex );
+	/* End of possible collision zone */
+
+	// Close the file
+	fclose( file );
 }
 
-uint32_t get_slave_id( char* slave_id )
-{}
+/*PRIVATE FUNCTIONS*/
 
-// Private Functions
-slave_t get_slave( uint32_t slave_id )
+slave_t get_slave( uint32_t slave_id, char* ip_address )
 {
-	// Search a slave in the file
+	// Slave to return in case of errors
+	slave_t slave_error;
+	// Give to the slave the id of -1, it means error
+	slave_error.id = -1;
+
+	// Open the file
+	FILE* file = NULL;
+	file = fopen( "slaves.dat", "rw" );
+
+	// Check that the file opening was sucessfull
+	if ( file == NULL )
+	{
+		// Close the file
+		fclose( file );
+		return slave_error; // Return the slave with error code id
+	}
+	
+	// To store the readed slave
+	slave_t slave;
+
+	/* Start of possible collision zone */
+	// Lock
+	pthread_mutex_lock( mutex );
+
+	// Read each element in the file untill slave with corresponding ip is found
+	while ( fread( &slave, sizeof( slave_t ), 1, file ) != 0 )
+	{
+		// Check that the slave id is the same of the one read
+		if ( slave.id == slave_id )
+		{
+			// Check if the slave informations need to be updated
+			if ( strcmp( slave.ip_address, ip_address ) != 0 )
+			{
+				// Update the ip
+				strcpy( slave.ip_address, ip_address );
+
+				// Update the slave on the file
+				fseek( file, -1 * sizeof( slave_t ), SEEK_CUR );
+				fwrite( &slave, sizeof( slave_t ), 1, file );
+			}
+			// Unlock
+			pthread_mutex_unlock( mutex );
+
+			// Close the file
+			fclose( file );
+
+			return slave;
+		}
+	}
+
+	// Unlock
+	pthread_mutex_unlock( mutex );
+	/* End of possible collision zone */
+
+	// Close the file
+	fclose( file );
+
+	// No slave was found, so return the slave with error code id
+	return slave_error;
+}
+
+const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number )
+{
+	// Open the file
+	FILE* file = NULL;
+	file = fopen( "animation_list", "r" );
+
+	// Check that the file opening was sucessfull
+	if ( file == NULL )
+	{
+		// Close the file
+		fclose( file );
+		return '\0'; // Return empty string
+	}
+	
+	// Create a buffer to store data
+	uint8_t* buffer_base = NULL;
+	uint8_t* buffer = buffer_base = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
+
+	/* Start of possible collision zone */
+	// Lock
+	pthread_mutex_lock( mutex );
+
+	// Store the file name to return
+	char* file_name = NULL;
+
+	// Read each line of the file untill the slave id is found
+	while ( fgets( buffer, BUFFER_SIZE, file ) )
+	{
+		if ( ( ( uint32_t* )buffer )[0] == animation_list_id )
+		{
+			// Count that animation number is valid
+			uint8_t animations = 0;
+
+			for ( uint32_t i = 0; i < strlen( BUFFER_SIZE ); i++ )
+				if ( buffer[i] == ';' )
+					animations += 1;
+			
+			// Check that there are enought animation
+			if ( animations - 1 < animation_number )
+			{
+				// Close the file
+				fclose( file );
+				// Unlock
+				pthread_mutex_unlock( mutex );
+				return '\0'; // Return empty string
+			}
+
+			buffer += 5; // 4 of id, 1 for ';'
+
+			// Search the animation
+			for ( int i = 0; i < animation_number; i++ )
+			{
+				file_name = strtok( buffer, ';' );
+				buffer += strlen( file_name ) + 1;
+			}
+		}
+	}
+
+	// Unlock
+	pthread_mutex_unlock( mutex );
+	/* End of possible collision zone */
+
+	// Free the buffer
+	free( buffer_base );
+	// Close the file
+	fclose( file );
+
+	return file_name;
 }
 
 uint8_t send_file( const char* animation_file, uint32_t slave_socket )
