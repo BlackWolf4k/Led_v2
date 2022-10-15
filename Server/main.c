@@ -14,8 +14,10 @@
 
 // Handle the slaves
 void handle_slaves_subprocess();
+
 // Function called if any part of slave's server subprocess starting failed
 void slave_server_error();
+
 // Handle the client
 void handle_clients();
 
@@ -35,6 +37,7 @@ void handle_slaves_subprocess()
 	if ( socket_descriptor < 0 )
 		slave_server_error();
 
+	// Create the address of the server
 	struct sockaddr_in server_address;
 	server_address.sin_family = AF_INET;
 	server_address.sin_addr.s_addr = inet_addr( "127.0.0.1" );
@@ -47,6 +50,7 @@ void handle_slaves_subprocess()
 	if ( established < 0 )
 		slave_server_error();
 
+	// Start listening
 	established = listen( socket_descriptor, MAX_NUMBER_OF_SLAVES );
 
 	// Check if listening start was sucessfull
@@ -62,11 +66,12 @@ void handle_slaves_subprocess()
 	{
 		// pthread_t* thread_id = ( pthread_t* )malloc( MAX_NUMBER_OF_SLAVES * sizeof( pthread_t ) );
 		pthread_t thread_id = 0;
-
 		new_slave_descriptor = 0;
 
+		// Accept slaves connections
 		new_slave_descriptor = accept( socket_descriptor, ( struct sockaddr* )&address, &address_size );
 
+		// When a slave connects start a thread to handle it
 		pthread_create( &thread_id, NULL, handle_slave, &new_slave_descriptor );
 	}
 }

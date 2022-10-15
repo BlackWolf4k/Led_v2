@@ -7,8 +7,8 @@ pthread_mutex_t mutex;
 
 /*
 SLAVE CONNECTION DESCRIPTOR
-id:				the id of the slave
-ip:address:		the ip address of the slave
+id: 			the id of the slave
+ip_address: 	the ip address of the slave
 */
 typedef struct
 {
@@ -47,7 +47,7 @@ delay_infomration
 ANIMATION FILE DESCRIPTOR
 number_of_line:		the number of lines in the file
 line_length:		the length of a single line
-repeat:				does the animation repeat
+repeat:				does the animation repeat ( 0 - 254: number of times to repeat, 255: loop )
 */
 typedef struct
 {
@@ -86,6 +86,10 @@ uint8_t* handle_slave( uint32_t socket_descriptor )
 	recv( socket_descriptor, buffer, BUFFER_SIZE, 0 );
 
 	slave_connection_t slave_connection = *( ( slave_connection_t* )buffer );
+
+	// Send to the slave a ack message that everything was recived
+	buffer[0] = 1;
+	send( socket_descriptor, buffer, 1, 0 );
 
 	// Get the slave descriptor
 	slave_t slave = get_slave( slave_connection.id, slave_connection.ip_address );
@@ -179,6 +183,9 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 			return slave;
 		}
 	}
+
+	// No slave with the corresponding id was found
+	// Add it
 
 	// Unlock
 	pthread_mutex_unlock( &mutex );
