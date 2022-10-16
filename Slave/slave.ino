@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+// #include <Adafruit_NeoPixel.h>
 
 /*
 ANIMATION DESCRIPTOR
@@ -13,8 +14,8 @@ struct animation_descriptor_t
 	int number_of_lines;
 	int line_length;
 	byte repeat;
-	int** colors;
-	int** delays;
+	byte* colors;
+	byte* delays;
 };
 
 /*
@@ -26,32 +27,6 @@ struct slave_connection_t
 {
 	uint8_t id;
 	char ip_address[16];
-};
-
-/*
-ANIMATION FILE DESCRIPTION:
-animation_file_descriptor
-led_informations
-delay_infomration
-...
-*/
-struct animation_descriptor_t
-{
-	byte** colors;
-	byte** delays;
-};
-
-/*
-ANIMATION FILE DESCRIPTOR
-number_of_line:		the number of lines in the file
-line_length:		the length of a single line
-repeat:				does the animation repeat ( 0 - 254: number of times to repeat, 255: loop )
-*/
-struct animation_file_descriptor_t
-{
-	uint32_t number_of_lines;
-	uint32_t line_length;
-	uint8_t repeat;
 };
 
 // Start the connection with the main server
@@ -78,22 +53,22 @@ byte play_animation( animation_descriptor_t* animation_descriptor );
 #define ID 1
 
 // Informations about the wifi
-const char* ssid = "led";
-const char* password = "password";
+char* ssid = "led";
+char* password = "password";
 
 // Informaions aboud the server
 #define PORT 1024
 
 // Local machine IP address
 IPAddress ip_address( 192, 168, 0, 2 );
-IPAddress geteway( 192, 168, 0, 1 );
+IPAddress gateway( 192, 168, 0, 1 );
 IPAddress subnet_mask( 255, 255, 255, 0 );
 
 // Create a server listening on slave port
 WiFiServer server( PORT );
 
 // Create a client to comunicata with the main server
-WiFiClient client( PORT );
+WiFiClient client;
 
 void setup()
 {
@@ -119,12 +94,14 @@ void setup()
 void loop()
 {
 	// Connect the client
-	client.connect();
+	client.connect( gateway, PORT );
 
 	// Intialize the infromation to send to the main server
 	slave_connection_t slave_informations;
 	slave_informations.id = ID;
-	slave_informations.ip_address = "192.168.0.2";
+	strcpy( slave_informations.ip_address, "192.168.0.2" );
+
+	Serial.println( "Sending basic informations" );
 
 	// Send the slave informaions to the main server
 	send_slave_connection_informations( slave_informations );
@@ -132,26 +109,36 @@ void loop()
 	// Create a animation descriptor to store the informations
 	animation_descriptor_t animation_descriptor;
 
+	Serial.println( "Reciving animation descriptor" );
+
 	// Recive the animation descriptor from the main server
-	recive_animation_descriptor( animation_descriptor );
+	recive_animation_descriptor( &animation_descriptor );
+
+	Serial.println( "Reciving animation" );
 
 	// Recive the animation from the main server
-	recive_animation( animation_descriptor );
+	recive_animation( &animation_descriptor );
+
+	Serial.println( "Closing connection with main server" );
 
 	// Close the connection with the main server
 	client.stop();
 
+	Serial.println( "Starting playing animation" );
+
 	// Start playing the animation
-	play_animation();
+	play_animation( &animation_descriptor );
 }
 
 byte send_slave_connection_informations( slave_connection_t slave_informations )
 {
 	// Send the slave connection descriptor
-	int bytes_sent = client.print( slave_informations ); // Probable ERROR HERE
+	int bytes_sent = 0;
+	for ( byte i = 0; i < sizeof( slave_connection_t ); i++ )
+		bytes_sent += client.write( ( ( byte* )( &slave_informations ) ), sizeof( slave_connection_t ) ); // Count the number of lines sent
 
 	// Check that the sending was sucessfull
-	if ( bytes_sent == -1 )
+	if ( bytes_sent != sizeof( slave_connection_t ) )
 		return -1; // Return failure status
 
 	// Recive main server ack message
@@ -168,8 +155,8 @@ byte send_slave_connection_informations( slave_connection_t slave_informations )
 byte recive_animation_descriptor( animation_descriptor_t* animation_descriptor )
 {
 	// Recive animation descriptor
-	for ( int i = 0; i < sizeof( animation_file_descriptor_t ); i++ )
-		( ( byte )( &animation_descriptor ) )[i] = client.read(); // Alternative way to read without a buffer
+	for ( int i = 0; i < sizeof( animation_descriptor_t ); i++ )
+		( ( byte* )( &animation_descriptor ) )[i] = client.read(); // Alternative way to read without a buffer
 	
 	return 0; // Everything was fine
 }
@@ -178,22 +165,22 @@ byte recive_animation( animation_descriptor_t* animation_descriptor )
 {
 	// Create animations and delays buffers
 	// Created as static to make them persist after that the scope finishes
-	static byte colors[ animation_descriptor.number_of_lines / 2, animation_descriptor.line_length ];
-	static byte delays[ animation_descriptor.number_of_lines / 2, animation_descriptor.line_length / 3 ];
+	static byte* colors = ( byte* )malloc( animation_descriptor -> number_of_lines / 2 * animation_descriptor -> line_length );
+	static byte* delays = ( byte* )malloc( animation_descriptor -> number_of_lines / 2 * animation_descriptor -> line_length / 3 );
 
 	// Store the arrays in the animation descriptor
-	animation_descriptor -> colors = &colors;
-	animation_descriptor -> delays = &delays;
+	animation_descriptor -> colors = colors;
+	animation_descriptor -> delays = delays;
 
 	// Recive the animation informations and store them in the buffers
-	for ( int i = 0; i < animation_descriptor.number_of_lines; i++ )
+	for ( int i = 0; i < animation_descriptor -> number_of_lines; i++ )
 	{
 		if ( i % 2 == 0 ) // If line is even is a dalay line
-			for ( int j = 0; j < animation_descriptor.line_length / 3; j++ )
-				delays[i][j] = client.read();
+			for ( int j = 0; j < animation_descriptor -> line_length / 3; j++ )
+				delays[ i * animation_descriptor -> line_length / 3 + j ] = client.read();
 		else // If line is odd is a color line
-			for ( int j = 0; j < animation_descriptor.line_length; j++ )
-				colors[i][j] = client.read();
+			for ( int j = 0; j < animation_descriptor -> line_length; j++ )
+				colors[ i * animation_descriptor -> line_length + j ] = client.read();
 	}
 
 	return 0; // Everything was fine

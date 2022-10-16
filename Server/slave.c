@@ -79,6 +79,8 @@ uint8_t send_file( const char* animation_file, uint32_t slave_socket );
 
 uint8_t* handle_slave( uint32_t socket_descriptor )
 {
+	printf( "Started comunication with slave\n" );
+
 	// Create a buffer to store informations
 	uint8_t* buffer = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
 
@@ -91,20 +93,28 @@ uint8_t* handle_slave( uint32_t socket_descriptor )
 	buffer[0] = 1;
 	send( socket_descriptor, buffer, 1, 0 );
 
+	printf( "Recived basic infromations\n" );
+
 	// Get the slave descriptor
 	slave_t slave = get_slave( slave_connection.id, slave_connection.ip_address );
 
 	// Check that the slave research was sucessfull
+
+	printf( "Searching for the next animation" );
 
 	// Get next animation
 	const char* file_name = get_next_animation( slave.animation_list, slave.actual_animation + 1 );
 
 	// Check that the next animation was found
 
+	printf( "Sending the next animation to the slave" );
+
 	// Send the animation
 	send_file( file_name, socket_descriptor );
 
 	// Check that the sending was sucessfull
+
+	printf( "Closing connection with slave" );
 
 	/* Update the slave informations in the file */
 	// Close the connection
@@ -121,6 +131,8 @@ uint8_t* handle_slave( uint32_t socket_descriptor )
 	/* Start of possible collision zone */
 	// Lock
 	pthread_mutex_lock( &mutex );
+
+	printf( "Updating information about the slave" );
 
 	// Unlock
 	pthread_mutex_unlock( &mutex );
