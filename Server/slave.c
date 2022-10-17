@@ -77,7 +77,7 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 // Returns a status code for success of failure
 uint8_t send_file( const char* animation_file, uint32_t slave_socket );
 
-uint8_t* handle_slave( uint32_t socket_descriptor )
+void* handle_slave( void* socket_descriptor )
 {
 	printf( "Started comunication with slave\n" );
 
@@ -85,13 +85,13 @@ uint8_t* handle_slave( uint32_t socket_descriptor )
 	uint8_t* buffer = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
 
 	// Recive the basic informations from the slave
-	recv( socket_descriptor, buffer, BUFFER_SIZE, 0 );
+	recv( *( uint32_t* )socket_descriptor, buffer, BUFFER_SIZE, 0 );
 
 	slave_connection_t slave_connection = *( ( slave_connection_t* )buffer );
 
 	// Send to the slave a ack message that everything was recived
 	buffer[0] = 1;
-	send( socket_descriptor, buffer, 1, 0 );
+	send( *( uint32_t* )socket_descriptor, buffer, 1, 0 );
 
 	printf( "Recived basic infromations\n" );
 
@@ -110,7 +110,7 @@ uint8_t* handle_slave( uint32_t socket_descriptor )
 	printf( "Sending the next animation to the slave" );
 
 	// Send the animation
-	send_file( file_name, socket_descriptor );
+	send_file( file_name, *( uint32_t* )socket_descriptor );
 
 	// Check that the sending was sucessfull
 
@@ -118,7 +118,7 @@ uint8_t* handle_slave( uint32_t socket_descriptor )
 
 	/* Update the slave informations in the file */
 	// Close the connection
-	close( socket_descriptor );
+	close( *( uint32_t* )socket_descriptor );
 
 	// Open the file
 	FILE* file = NULL;

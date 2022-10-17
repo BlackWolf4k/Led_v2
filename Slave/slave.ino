@@ -93,6 +93,9 @@ void setup()
 
 void loop()
 {
+	// Stores return values from send and recive functions
+	byte return_value = 0;
+
 	// Connect the client
 	client.connect( gateway, PORT );
 
@@ -104,7 +107,11 @@ void loop()
 	Serial.println( "Sending basic informations" );
 
 	// Send the slave informaions to the main server
-	send_slave_connection_informations( slave_informations );
+	return_value = send_slave_connection_informations( slave_informations );
+
+	// Check that the connection was sucessfull
+	if ( return_value == -1 )
+		Serial.println( "There was an error in the connection" );
 
 	// Create a animation descriptor to store the informations
 	animation_descriptor_t animation_descriptor;
@@ -112,12 +119,12 @@ void loop()
 	Serial.println( "Reciving animation descriptor" );
 
 	// Recive the animation descriptor from the main server
-	recive_animation_descriptor( &animation_descriptor );
+	return_value = recive_animation_descriptor( &animation_descriptor );
 
 	Serial.println( "Reciving animation" );
 
 	// Recive the animation from the main server
-	recive_animation( &animation_descriptor );
+	return_value = recive_animation( &animation_descriptor );
 
 	Serial.println( "Closing connection with main server" );
 
