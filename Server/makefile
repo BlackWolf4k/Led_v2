@@ -1,5 +1,5 @@
 CC = gcc # gcc cross compiler for x86
-CFLAGS = -g -c # all the flags for compiling
+CFLAGS = -c # all the flags for compiling
 
 C_SOURCES = $(wildcard 	./*.c)
 
