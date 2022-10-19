@@ -2,6 +2,7 @@
 	"C_Cpp.errorSquiggles": "disabled",
 	"files.associations": {
 		"cstddef": "cpp",
-		"*.tcc": "cpp"
+		"*.tcc": "cpp",
+		"stdint.h": "c"
 	}
 }

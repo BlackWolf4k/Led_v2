@@ -13,9 +13,9 @@ struct animation_descriptor_t
 {
 	int number_of_lines;
 	int line_length;
+	byte delay;
 	byte repeat;
 	byte* colors;
-	byte* delays;
 };
 
 /*
@@ -173,21 +173,15 @@ byte recive_animation( animation_descriptor_t* animation_descriptor )
 	// Create animations and delays buffers
 	// Created as static to make them persist after that the scope finishes
 	static byte* colors = ( byte* )malloc( animation_descriptor -> number_of_lines / 2 * animation_descriptor -> line_length );
-	static byte* delays = ( byte* )malloc( animation_descriptor -> number_of_lines / 2 * animation_descriptor -> line_length / 3 );
 
 	// Store the arrays in the animation descriptor
 	animation_descriptor -> colors = colors;
-	animation_descriptor -> delays = delays;
 
 	// Recive the animation informations and store them in the buffers
 	for ( int i = 0; i < animation_descriptor -> number_of_lines; i++ )
 	{
-		if ( i % 2 == 0 ) // If line is even is a dalay line
-			for ( int j = 0; j < animation_descriptor -> line_length / 3; j++ )
-				delays[ i * animation_descriptor -> line_length / 3 + j ] = client.read();
-		else // If line is odd is a color line
-			for ( int j = 0; j < animation_descriptor -> line_length; j++ )
-				colors[ i * animation_descriptor -> line_length + j ] = client.read();
+		for ( int j = 0; j < animation_descriptor -> line_length; j++ )
+			colors[ i * animation_descriptor -> line_length + j ] = client.read();
 	}
 
 	return 0; // Everything was fine

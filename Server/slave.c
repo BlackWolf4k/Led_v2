@@ -18,11 +18,11 @@ typedef struct
 
 /*
 SLAVES DESCRIPTOR:
-id:					identifier of a slave
+id: 				identifier of a slave
 actual_animation:	the currently plaing animation
-status:				if waiting for something, or plaing and animation
-animation_list:		the id of the animation list
-ip_address:			ip address of the slave
+status: 			if waiting for something, or plaing and animation
+animation_list: 	the id of the animation list
+ip_address: 		ip address of the slave
 */
 typedef struct
 {
@@ -39,20 +39,21 @@ list_id;file_name;file_name... ( 50 animations list MAX )
 ANIMATION FILE DESCRIPTION:
 animation_file_descriptor
 led_informations
-delay_infomration
 ...
 */
 
 /*
 ANIMATION FILE DESCRIPTOR
-number_of_line:		the number of lines in the file
+number_of_line: 	the number of lines in the file
 line_length:		the length of a single line
-repeat:				does the animation repeat ( 0 - 254: number of times to repeat, 255: loop )
+delay:				the delay between each change of led colors
+repeat: 			does the animation repeat ( 0 - 254: number of times to repeat, 255: loop )
 */
 typedef struct
 {
 	uint32_t number_of_lines;
 	uint32_t line_length;
+	uint8_t delay;
 	uint8_t repeat;
 } animation_file_descriptor_t;
 
@@ -214,7 +215,7 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 {
 	// Open the file
 	FILE* file = NULL;
-	file = fopen( "animation_list", "r" );
+	file = fopen( "animations_list", "r" );
 
 	// Check that the file opening was sucessfull
 	if ( file == NULL )
