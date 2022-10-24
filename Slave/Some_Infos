@@ -1,0 +1,16 @@
+RaspBerry Pi Pico W
+Wireless connect:
+	https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf
+	Pag 270
+
+https://visualgdb.com/tutorials/raspberry/pico_w/
+
+# Documentation
+## General
+https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf
+
+## Duale core
+https://raspberrypi.github.io/pico-sdk-doxygen/group__pico__multicore.html
+
+## Sockets lwip
+https://www.nongnu.org/lwip/2_0_x/group__socket.html

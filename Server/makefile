@@ -1,7 +1,10 @@
 CC = gcc # gcc cross compiler for x86
 CFLAGS = -c # all the flags for compiling
 
-C_SOURCES = $(wildcard 	./*.c)
+C_SOURCES = $(wildcard 	./*.c \
+						./Server/*.c \
+						./Client/*.c \
+						./Slave/*.c)
 
 C_HEADERS = $(wildcard 	./*.h)
 
@@ -14,9 +17,13 @@ server.elf: ${OBJ}
 	${CC} ${CFLAGS} $< -o $@
 
 server: server.elf
-	./server.elf
+	mv server.elf ./execution_space
+	./execution_space/server.elf
 	make clean
 
 clean:
 	$(RM) *.o
-	$(RM) *.elf
+	$(RM) ./Server/*.o
+	$(RM) ./Client/*.o
+	$(RM) ./Slave/*.o
+	$(RM) ./execution_space/*.elf

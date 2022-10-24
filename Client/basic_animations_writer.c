@@ -20,9 +20,15 @@ int main()
 {
 	FILE* file = NULL;
 
-	file = fopen( "../Server/animation__.dat", "w" );
+	file = fopen( "../Server/animations_list.dat", "w" );
 
-	animation_descriptor_t descriptor;
+	uint32_t id = 0;
+
+	printf( "Written: %d bytes\n" , fwrite( &id, sizeof( uint32_t ), 1, file ) );
+
+	fprintf( file, "./animation__.dat" );
+
+	/*animation_descriptor_t descriptor;
 	descriptor.number_of_lines = 4;
 	descriptor.line_length = 4 * 3;
 	descriptor.delay = 10;
@@ -72,7 +78,7 @@ int main()
 	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	led.red = 255; led.green = 0; led.blue = 255;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );*/
 
 
 	fclose( file );

@@ -90,10 +90,6 @@ void* handle_slave( void* socket_descriptor )
 
 	slave_connection_t slave_connection = *( ( slave_connection_t* )buffer );
 
-	// Send to the slave a ack message that everything was recived
-	buffer[0] = 1;
-	send( *( uint32_t* )socket_descriptor, buffer, 1, 0 );
-
 	printf( "Recived basic infromations\n" );
 
 	// Get the slave descriptor
@@ -215,7 +211,7 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 {
 	// Open the file
 	FILE* file = NULL;
-	file = fopen( "animations_list", "r" );
+	file = fopen( "animations_list.dat", "r" );
 
 	// Check that the file opening was sucessfull
 	if ( file == NULL )
