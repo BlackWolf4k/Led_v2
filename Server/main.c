@@ -38,7 +38,7 @@ void slave_handler_subprocess()
 
 	uint8_t status_code = 0;
 
-	printf( "Creating Socket for Slaves" );
+	printf( "Creating Socket for Slaves\n" );
 
 	// Create the socket
 	socket_descriptor = create_socket();
@@ -47,7 +47,7 @@ void slave_handler_subprocess()
 	if ( socket_descriptor == -1 )
 		connection_error();
 	
-	printf( "Binding Connection for Slaves" );
+	printf( "Binding Connection for Slaves\n" );
 
 	status_code = bind_connection( &socket_descriptor, "127.0.0.1", 1234 );
 
@@ -55,7 +55,7 @@ void slave_handler_subprocess()
 	if ( !status_code )
 		connection_error();
 	
-	printf( "Starting to listen for Slaves" );
+	printf( "Starting to listen for Slaves\n" );
 	
 	status_code = listen_connection( &socket_descriptor, MAX_NUMBER_OF_SLAVES );
 	
@@ -63,7 +63,7 @@ void slave_handler_subprocess()
 	if ( !status_code )
 		connection_error();
 	
-	printf( "Starting to Accept connections from Slaves" );
+	printf( "Starting to Accept connections from Slaves\n" );
 	
 	// Accept connection in loop of slaves
 	while ( 1 )

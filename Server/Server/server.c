@@ -64,25 +64,36 @@ pthread_t accept_connection( int32_t* socket_descriptor, void*( *handle_function
 {
 	pthread_t thread_id = 0;
 
-	int32_t new_socket_descriptor = 0;
+	// Create plase where to store new socket
+	int32_t* new_socket_descriptor = NULL;
+	new_socket_descriptor = calloc( 1, sizeof( uint32_t ) );
+
+	if ( new_socket_descriptor == NULL )
+	{
+		perror( "[Malloc Error]" );
+		exit( 1 );
+	}
+
+	*new_socket_descriptor = 0;
+
 	struct sockaddr_in address;
 	socklen_t address_size = sizeof( address );
 
-	printf( "Waiting connection" );
+	printf( "Waiting connection\n" );
 
 	// Accept the new connection
-	new_socket_descriptor = accept( *socket_descriptor, ( struct sockaddr* )&address, &address_size );
+	*new_socket_descriptor = accept( *socket_descriptor, ( struct sockaddr* )&address, &address_size );
 
-	printf( "Connection recived" );
+	printf( "Connection recived\n" );
 
 	// Start the thread that handles the connection
-	pthread_create( &thread_id, NULL, handle_function, &new_socket_descriptor );
+	printf( "Socket: %d\n", *new_socket_descriptor);
 
-	return 1;
+	return pthread_create( &thread_id, NULL, handle_function, new_socket_descriptor );
 }
 
 void connection_error()
 {
-	perror( "An errros has occurred" ); // Print the occurred error
+	perror( "An errros has occurred\n" ); // Print the occurred error
 	exit( 0 );
 }

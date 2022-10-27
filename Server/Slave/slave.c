@@ -76,17 +76,32 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 
 // Send the animation file to the slave
 // Returns a status code for success of failure
-uint8_t send_file( const char* animation_file, uint32_t slave_socket );
+uint8_t send_file( const char* animation_file, int32_t slave_socket );
 
 void* handle_slave( void* socket_descriptor )
 {
 	printf( "Started comunication with slave\n" );
 
+	uint32_t bytes_recived = 0;
+
 	// Create a buffer to store informations
-	uint8_t* buffer = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
+	uint8_t* buffer = NULL;
+	buffer = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
+
+	if ( buffer == NULL )
+	{
+		perror( "[Malloc Error]" );
+		exit( 1 );
+	}
 
 	// Recive the basic informations from the slave
-	recv( *( uint32_t* )socket_descriptor, buffer, BUFFER_SIZE, 0 );
+	bytes_recived = recv( *( int32_t* )socket_descriptor, buffer, BUFFER_SIZE, 0 );
+	
+	if ( bytes_recived <= 0 )
+	{
+		perror( "[Socket Error]" );
+		exit( 1 );
+	}
 
 	slave_connection_t slave_connection = *( ( slave_connection_t* )buffer );
 
@@ -97,25 +112,25 @@ void* handle_slave( void* socket_descriptor )
 
 	// Check that the slave research was sucessfull
 
-	printf( "Searching for the next animation" );
+	printf( "Searching for the next animation\n" );
 
 	// Get next animation
 	const char* file_name = get_next_animation( slave.animation_list, slave.actual_animation + 1 );
 
 	// Check that the next animation was found
 
-	printf( "Sending the next animation to the slave" );
+	printf( "Sending the next animation to the slave\n" );
 
 	// Send the animation
-	send_file( file_name, *( uint32_t* )socket_descriptor );
+	send_file( file_name, *( int32_t* )socket_descriptor );
 
 	// Check that the sending was sucessfull
 
-	printf( "Closing connection with slave" );
+	printf( "Closing connection with slave\n" );
 
 	/* Update the slave informations in the file */
 	// Close the connection
-	close( *( uint32_t* )socket_descriptor );
+	close( *( int32_t* )socket_descriptor );
 
 	// Open the file
 	FILE* file = NULL;
@@ -129,7 +144,7 @@ void* handle_slave( void* socket_descriptor )
 	// Lock
 	pthread_mutex_lock( &mutex );
 
-	printf( "Updating information about the slave" );
+	printf( "Updating information about the slave\n" );
 
 	// Unlock
 	pthread_mutex_unlock( &mutex );
@@ -137,12 +152,20 @@ void* handle_slave( void* socket_descriptor )
 
 	// Close the file
 	fclose( file );
+
+	// Free the socket
+	// Shouldn' t be here
+	// I use arch btw
+	free( socket_descriptor );
 }
 
 /*PRIVATE FUNCTIONS*/
 
+uint8_t recive_slave_descriptor();
+
 slave_t get_slave( uint32_t slave_id, char* ip_address )
 {
+	printf( "oooooooooo");
 	// Slave to return in case of errors
 	slave_t slave_error;
 	// Give to the slave the id of -1, it means error
@@ -167,6 +190,8 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 	// Lock
 	pthread_mutex_lock( &mutex );
 
+	printf( "aaa");
+
 	// Read each element in the file untill slave with corresponding ip is found
 	while ( fread( &slave, sizeof( slave_t ), 1, file ) != 0 )
 	{
@@ -184,6 +209,7 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 				fwrite( &slave, sizeof( slave_t ), 1, file );
 			}
 			// Unlock
+			printf( "bbb");
 			pthread_mutex_unlock( &mutex );
 
 			// Close the file
@@ -197,6 +223,7 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 	// Add it
 
 	// Unlock
+	printf( "ccc");
 	pthread_mutex_unlock( &mutex );
 	/* End of possible collision zone */
 
@@ -277,7 +304,7 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 	return file_name;
 }
 
-uint8_t send_file( const char* animation_file, uint32_t slave_socket )
+uint8_t send_file( const char* animation_file, int32_t slave_socket )
 {
 	// Create and open a file
 	FILE* file = NULL;
