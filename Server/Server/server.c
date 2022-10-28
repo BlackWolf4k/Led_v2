@@ -94,6 +94,6 @@ pthread_t accept_connection( int32_t* socket_descriptor, void*( *handle_function
 
 void connection_error()
 {
-	perror( "An errros has occurred\n" ); // Print the occurred error
+	perror( "An error has occurred\n" ); // Print the occurred error
 	exit( 0 );
 }

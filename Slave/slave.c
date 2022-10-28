@@ -118,7 +118,7 @@ int main()
 	slave_connection_t slave_informations;
 	animation_descriptor_t animation_descriptor;
 
-	slave_informations.id = 1;
+	slave_informations.id = 0;
 	strcpy( slave_informations.ip_address, "255.255.255.255" );
 
 	// Create socket to connect to the main server
@@ -199,10 +199,15 @@ uint8_t recive_animation_descriptor( int32_t socket_descriptor, animation_descri
 
 	// Recive the animation descriptor
 	bytes_recived = recv( socket_descriptor, buffer, BUFFER_SIZE, 0 );
+	perror( "[Socket Error]" );
 
 	// Check that the animation descriptor reciving was sucessfull
-	if ( bytes_recived < sizeof( animation_descriptor_t ) );
+	// Check that the reciving was sucessfull
+	if ( bytes_recived <= sizeof( animation_descriptor_t ) )
+	{
+		printf( "Recived: %d\n", bytes_recived );
 		return 0; // There was an error while reciving
+	}
 	
 	// Store the animation descriptor in the passed argument
 	*animation_descriptor = *( ( animation_descriptor_t* )( buffer ) );
@@ -244,7 +249,10 @@ uint8_t recive_animation( int32_t socket_descriptor, animation_descriptor_t* ani
 
 			// Check that the reciving was sucessfull
 			if ( bytes_recived <= 0 )
+			{
+				perror( "[Socket Error]" );
 				return 0; // There was an error in the trasmission
+			}
 
 			bytes_recived_total += bytes_recived;
 
@@ -258,4 +266,13 @@ uint8_t recive_animation( int32_t socket_descriptor, animation_descriptor_t* ani
 }
 
 uint8_t play_animation( int32_t socket_descriptor, animation_descriptor_t* animation_descriptor )
-{}
+{
+	printf( "Number of Lines:%d, Line Length:%d, Repetitions:%d, Delay: %d", animation_descriptor -> number_of_lines, animation_descriptor -> line_length, animation_descriptor -> repeat, animation_descriptor -> delay );
+	printf( "Animaton body:\n" );
+	for ( int i = 0; i < animation_descriptor -> line_length * animation_descriptor -> number_of_lines; i++ )
+	{
+		printf( "%u ", animation_descriptor -> animation[i] );
+		if ( i % 3 == 0 )
+			printf( "\n" );
+	}
+}

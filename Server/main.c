@@ -63,7 +63,7 @@ void slave_handler_subprocess()
 	if ( !status_code )
 		connection_error();
 	
-	printf( "Starting to Accept connections from Slaves\n" );
+	printf( "Starting to accept connections from Slaves\n" );
 	
 	// Accept connection in loop of slaves
 	while ( 1 )

@@ -1,6 +1,7 @@
 #include "slave.h"
 
 #define BUFFER_SIZE 1024
+#define ANIMATION_NAME_LENGTH 20
 
 // Create a mutex to lock when file positioning is needed
 pthread_mutex_t mutex;
@@ -27,10 +28,10 @@ ip_address: 		ip address of the slave
 typedef struct
 {
 	uint8_t id;
+	char ip_address[16];
 	uint8_t status;
 	uint8_t animation_list;
 	uint8_t actual_animation;
-	char ip_address[16];
 } slave_t;
 
 /*
@@ -58,7 +59,7 @@ typedef struct
 } animation_file_descriptor_t;
 
 // Animation header size ( +1 for the \n )
-#define ANIMATION_HEADER_SIZE ( sizeof( animation_file_descriptor_t ) + 1 )
+#define ANIMATION_HEADER_SIZE ( sizeof( animation_file_descriptor_t ) - 2 )
 
 /*PRIVATE FUNCTIONS DECLARATION*/
 
@@ -72,7 +73,7 @@ slave_t get_slave( uint32_t slave_id, char* ip_address );
 // The animation list number and the actual animation are needed
 // The file name of the next animation will be returned
 // If and error occured, an empry string is returned
-const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number );
+char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number );
 
 // Send the animation file to the slave
 // Returns a status code for success of failure
@@ -115,7 +116,7 @@ void* handle_slave( void* socket_descriptor )
 	printf( "Searching for the next animation\n" );
 
 	// Get next animation
-	const char* file_name = get_next_animation( slave.animation_list, slave.actual_animation + 1 );
+	char* file_name = get_next_animation( slave.animation_list, slave.actual_animation );
 
 	// Check that the next animation was found
 
@@ -134,7 +135,7 @@ void* handle_slave( void* socket_descriptor )
 
 	// Open the file
 	FILE* file = NULL;
-	fopen( "slaves.dat", "rw" );
+	file = fopen( "slaves.dat", "r+" );
 
 	// Check that the file opening was sucessfull
 	// if ( file == NULL )
@@ -157,6 +158,11 @@ void* handle_slave( void* socket_descriptor )
 	// Shouldn' t be here
 	// I use arch btw
 	free( socket_descriptor );
+
+	// Free the file_name space
+	free( file_name );
+
+	printf( "Slave sucessfully served\n" );
 }
 
 /*PRIVATE FUNCTIONS*/
@@ -165,7 +171,6 @@ uint8_t recive_slave_descriptor();
 
 slave_t get_slave( uint32_t slave_id, char* ip_address )
 {
-	printf( "oooooooooo");
 	// Slave to return in case of errors
 	slave_t slave_error;
 	// Give to the slave the id of -1, it means error
@@ -173,13 +178,12 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 
 	// Open the file
 	FILE* file = NULL;
-	file = fopen( "slaves.dat", "rw" );
+	file = fopen( "slaves.dat", "r+" );
 
 	// Check that the file opening was sucessfull
 	if ( file == NULL )
 	{
-		// Close the file
-		fclose( file );
+		perror( "[File Error]" );
 		return slave_error; // Return the slave with error code id
 	}
 	
@@ -189,8 +193,6 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 	/* Start of possible collision zone */
 	// Lock
 	pthread_mutex_lock( &mutex );
-
-	printf( "aaa");
 
 	// Read each element in the file untill slave with corresponding ip is found
 	while ( fread( &slave, sizeof( slave_t ), 1, file ) != 0 )
@@ -206,10 +208,10 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 
 				// Update the slave on the file
 				fseek( file, -1 * sizeof( slave_t ), SEEK_CUR );
-				fwrite( &slave, sizeof( slave_t ), 1, file );
+				if ( fwrite( &slave, sizeof( slave_t ), 1, file ) != sizeof( slave_t ) )
+					printf( "Something went wrong while updating the slaves informations\n" );
 			}
 			// Unlock
-			printf( "bbb");
 			pthread_mutex_unlock( &mutex );
 
 			// Close the file
@@ -221,9 +223,16 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 
 	// No slave with the corresponding id was found
 	// Add it
+	// Copy the informations about the slave
+	slave_t new_slave;
+	new_slave.id = slave_id;
+	strcpy( new_slave.ip_address, ip_address );
+
+	// Write the slave
+	if ( fwrite( &new_slave, sizeof( slave_t ), 1, file ) != sizeof( slave_t ) )
+		printf( "Something went wrong while writing the slave\n" );
 
 	// Unlock
-	printf( "ccc");
 	pthread_mutex_unlock( &mutex );
 	/* End of possible collision zone */
 
@@ -234,7 +243,7 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 	return slave_error;
 }
 
-const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number )
+char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number )
 {
 	// Open the file
 	FILE* file = NULL;
@@ -243,8 +252,7 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 	// Check that the file opening was sucessfull
 	if ( file == NULL )
 	{
-		// Close the file
-		fclose( file );
+		perror( "[File Error]" );
 		return '\0'; // Return empty string
 	}
 	
@@ -252,21 +260,39 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 	uint8_t* buffer_base = NULL;
 	uint8_t* buffer = buffer_base = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
 
+	// Check that the memory allocation was sucessfull
+	if ( buffer_base == NULL )
+	{
+		perror( "[Memory Error]" );
+		return '\0';
+	}
+
 	/* Start of possible collision zone */
 	// Lock
 	pthread_mutex_lock( &mutex );
 
 	// Store the file name to return
 	char* file_name = NULL;
+	file_name = ( uint8_t* )calloc( ANIMATION_NAME_LENGTH, sizeof( uint8_t ) );
+
+	// Check that the memory allocation was sucessfull
+	if ( file_name == NULL )
+	{
+		perror( "[Memory Error]" );
+		return '\0';
+	}
+
+	printf( "Looking for animation number: %d\n", animation_number );
 
 	// Read each line of the file untill the slave id is found
 	while ( fgets( buffer, BUFFER_SIZE, file ) )
 	{
-		if ( ( ( uint32_t* )buffer )[0] == animation_list_id )
+		if ( ( ( uint8_t* )buffer )[0] == animation_list_id )
 		{
-			// Count that animation number is valid
+			// Animations number counter
 			uint8_t animations = 0;
 
+			// Counter the number of animations
 			for ( uint32_t i = 0; i < BUFFER_SIZE; i++ )
 				if ( buffer[i] == ';' )
 					animations += 1;
@@ -281,12 +307,13 @@ const char* get_next_animation( uint32_t animation_list_id, uint32_t animation_n
 				return '\0'; // Return empty string
 			}
 
-			buffer += 5; // 4 of id, 1 for ';'
+			// Clear out the list id
+			buffer += 2; // 1 of id, 1 for ';'
 
 			// Search the animation
-			for ( int i = 0; i < animation_number; i++ )
+			for ( int i = 0; i <= animation_number; i++ )
 			{
-				file_name = strtok( buffer, ";" );
+				strcpy( file_name, strtok( buffer, ";" ) );
 				buffer += strlen( file_name ) + 1;
 			}
 		}
@@ -311,12 +338,27 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 	/* A Animation file can't be opened by more than one thread at the time */
 	file = fopen( animation_file, "r" );
 
-	// Alloc a Buffer to store informations
-	uint8_t* buffer = ( uint8_t* )calloc( ANIMATION_HEADER_SIZE, sizeof( uint8_t ) );
+	printf( "FileName: %s\n", animation_file );
 
 	// Check that the file was opened
-	if ( file == NULL || buffer == NULL )
+	if ( file == NULL )
+	{
+		perror( "[File Error]" );
 		return 1; // Error while opening the file
+	}
+
+	// Alloc a Buffer to store informations
+	uint8_t* buffer = NULL;
+	buffer = ( uint8_t* )calloc( ANIMATION_HEADER_SIZE, sizeof( uint8_t ) );
+
+	// Check that the memory allocation was sucessfull
+	if ( buffer == NULL )
+	{
+		perror( "[Memory Error]" );
+		return 1; // Error while allocating the memory
+	}
+	
+	int32_t bytes_sent = 0;
 
 	// Read the header
 	if ( fgets( buffer, ANIMATION_HEADER_SIZE, file ) == NULL )
@@ -326,7 +368,10 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 	animation_file_descriptor_t animation_file_descriptor = *( ( animation_file_descriptor_t* )( buffer ) );
 	
 	// Send the animation file descriptor
-	if ( send( slave_socket, buffer, BUFFER_SIZE, 0 ) == -1 )
+	bytes_sent = send( slave_socket, buffer, BUFFER_SIZE, 0 );
+	perror( "[Socket Error]" );
+
+	if ( bytes_sent <= 0 )
 		return 1;
 
 	// Resize the buffer
@@ -334,13 +379,13 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 	buffer = ( uint8_t* )calloc( animation_file_descriptor.line_length + 1, sizeof( uint8_t ) );
 
 	// Store the bytes sent
-	uint32_t bytes_sent = 0;
+	bytes_sent = 0;
 
 	// Read the line and check that it exitst
 	while ( fgets( buffer, animation_file_descriptor.line_length + 1, file ) != NULL )
 	{
 		// Make sure to sent the whole line
-		while ( animation_file_descriptor.line_length - bytes_sent > 0 )
+		while ( ( int32_t )( animation_file_descriptor.line_length - bytes_sent ) > 0 )
 		{
 			// Send the buffer, and store the number of bytes sent
 			bytes_sent += send( slave_socket, ( buffer + bytes_sent ), BUFFER_SIZE, 0 );

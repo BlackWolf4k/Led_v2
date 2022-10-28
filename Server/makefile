@@ -1,5 +1,5 @@
 CC = gcc # gcc cross compiler for x86
-CFLAGS = -c # all the flags for compiling
+CFLAGS = -c -g # all the flags for compiling
 
 C_SOURCES = $(wildcard 	./*.c \
 						./Server/*.c \
@@ -16,10 +16,11 @@ server.elf: ${OBJ}
 %.o: %.c ${C_HEADERS}
 	${CC} ${CFLAGS} $< -o $@
 
+debug: server.elf
+	mv server.elf ./execution_space
+
 server: server.elf
 	mv server.elf ./execution_space
-	./execution_space/server.elf
-	make clean
 
 clean:
 	$(RM) *.o
