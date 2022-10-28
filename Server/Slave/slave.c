@@ -59,7 +59,7 @@ typedef struct
 } animation_file_descriptor_t;
 
 // Animation header size ( +1 for the \n )
-#define ANIMATION_HEADER_SIZE ( sizeof( animation_file_descriptor_t ) - 2 )
+#define ANIMATION_HEADER_SIZE ( sizeof( animation_file_descriptor_t ) )
 
 /*PRIVATE FUNCTIONS DECLARATION*/
 
@@ -349,7 +349,7 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 
 	// Alloc a Buffer to store informations
 	uint8_t* buffer = NULL;
-	buffer = ( uint8_t* )calloc( ANIMATION_HEADER_SIZE, sizeof( uint8_t ) );
+	buffer = ( uint8_t* )calloc( ANIMATION_HEADER_SIZE + 1, sizeof( uint8_t ) );
 
 	// Check that the memory allocation was sucessfull
 	if ( buffer == NULL )
@@ -361,7 +361,7 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 	int32_t bytes_sent = 0;
 
 	// Read the header
-	if ( fgets( buffer, ANIMATION_HEADER_SIZE, file ) == NULL )
+	if ( fread( buffer, ANIMATION_HEADER_SIZE + 1, 1, file ) == 0 )
 		return 1;
 	
 	// Copy the header in a variable

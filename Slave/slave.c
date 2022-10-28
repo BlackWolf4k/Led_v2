@@ -96,7 +96,7 @@ uint8_t forced_stop = 0;
 
 int main()
 {
-	/*stdio_init_all();
+	stdio_init_all();
 
 	// Connect to the wifi
 	if ( cyw43_arch_wifi_connect_timeout_ms( ssid, password, CYW43_AUTH_WPA2_AES_PSK, 10000 ) )
@@ -106,7 +106,7 @@ int main()
 		return 0; // Exit the program
 	}
 	// Connection was sucessfull
-	printf( "Connected" );*/
+	printf( "Connected" );
 
 	printf( "Starting callback server\n" );
 	// Start the second core
@@ -267,7 +267,7 @@ uint8_t recive_animation( int32_t socket_descriptor, animation_descriptor_t* ani
 
 uint8_t play_animation( int32_t socket_descriptor, animation_descriptor_t* animation_descriptor )
 {
-	printf( "Number of Lines:%d, Line Length:%d, Repetitions:%d, Delay: %d", animation_descriptor -> number_of_lines, animation_descriptor -> line_length, animation_descriptor -> repeat, animation_descriptor -> delay );
+	printf( "Number of Lines:%d, Line Length:%d, Repetitions:%d, Delay: %d\n", animation_descriptor -> number_of_lines, animation_descriptor -> line_length, animation_descriptor -> repeat, animation_descriptor -> delay );
 	printf( "Animaton body:\n" );
 	for ( int i = 0; i < animation_descriptor -> line_length * animation_descriptor -> number_of_lines; i++ )
 	{
