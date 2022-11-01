@@ -15,3 +15,6 @@ https://www.nongnu.org/lwip/2_0_x/group__socket.html
 
 ## To write ws2812 driver
 https://github.com/ForsakenNGS/Pico_WS2812/blob/master/WS2812.pio
+
+## CMake
+cmake . -DPICO_BOARD=pico_w -DWIFI_SSID="SmartLeds" -DWIFI_PASSWORD="password"

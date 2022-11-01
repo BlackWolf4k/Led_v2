@@ -361,7 +361,7 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 	int32_t bytes_sent = 0;
 
 	// Read the header
-	if ( fread( buffer, ANIMATION_HEADER_SIZE + 1, 1, file ) == 0 )
+	if ( fread( buffer, ANIMATION_HEADER_SIZE + 1, 1, file ) == 0 ) // +1 for \n
 		return 1;
 	
 	// Copy the header in a variable
