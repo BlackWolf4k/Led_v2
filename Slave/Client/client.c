@@ -55,9 +55,10 @@ uint8_t close( client_t* client )
 	tcp_close( client -> server_pcb );
 }
 
-uint8_t send()
+uint8_t send( client_t* client )
 {
 	cyw43_arch_lwip_check();
+	strcpy( client -> buffer, "1;255.252.111.222" );
 	tcp_write( client -> server_pcb, client -> buffer, BUFFER_SIZE, TCP_WRITE_FLAG_COPY );
 }
 

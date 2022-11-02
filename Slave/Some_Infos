@@ -18,3 +18,5 @@ https://github.com/ForsakenNGS/Pico_WS2812/blob/master/WS2812.pio
 
 ## CMake
 cmake . -DPICO_BOARD=pico_w -DWIFI_SSID="SmartLeds" -DWIFI_PASSWORD="password"
+
+https://www.nongnu.org/lwip/2_0_x/group__tcp__raw.html

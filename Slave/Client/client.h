@@ -7,6 +7,8 @@
 #include "lwip/pbuf.h"
 #include "lwip/tcp.h"
 
+#include <string.h>
+
 typedef struct
 {
 	struct tcp_pcb* tcp_pcb;
@@ -34,7 +36,7 @@ uint8_t close( client_t* client );
 // Send data
 // Requires
 // Returns
-uint8_t send();
+uint8_t send( client_t* client );
 
 // Recive data
 // Requires
