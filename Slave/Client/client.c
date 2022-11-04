@@ -11,7 +11,7 @@ client_t* client_init()
 {
 	// Allocate the client
 	client_t* client = NULL;
-	client_t* client = calloc( 1, sizeof( client_t ) );
+	client = calloc( 1, sizeof( client_t ) );
 
 	// Allocate a space for the buffer
 	client -> buffer = calloc( BUFFER_SIZE, sizeof( uint8_t ) );
@@ -23,23 +23,25 @@ client_t* client_init()
 		return NULL; // Returns a null pointer
 	}
 
+	ip4addr_aton( "192.168.0.1", &( client -> server_address ) );
+
 	// Return the client
 	return client;
 }
 
-uint8_t connect( client_t* client, const char* ip_address, uint16_t port );
+uint8_t connect( client_t* client, const char* ip_address, uint16_t port )
 {
-	client -> server_pcb = tcp_new_ip_type( IP_GET_TYPE( &( client -> remote_addr ) ) );
+	client -> server_pcb = tcp_new_ip_type( IP_GET_TYPE( &( client -> server_address ) ) );
 
 	tcp_arg( client -> server_pcb, client );
-	tcp_sent( client -> server_pcb, );
-	tcp_recv( client -> server_pcb, );
+	// tcp_sent( client -> server_pcb, );
+	// tcp_recv( client -> server_pcb, );
 	// tcp_poll( client -> server_pcb, );
 	// tcp_err( client -> server_pcb, );
 
 	cyw43_arch_lwip_begin();
 
-    int32_t status_code = tcp_connect( client -> server_pcb, &( client -> remote_addr ), port, NULL );
+    int32_t status_code = tcp_connect( client -> server_pcb, &( client -> server_address ), port, NULL );
 
     cyw43_arch_lwip_end();
 }

@@ -5,6 +5,7 @@
 #include <stdint.h>
 // For memcpy and bzero
 #include <string.h>
+/*
 #include "pico/stdlib.h"
 // For the wifi connection
 #include "pico/cyw43_arch.h"
@@ -13,12 +14,12 @@
 #include "lwip/inet.h"
 // For multi core
 #include "pico/multicore.h"
-
+*/
 
 /*REMOVE THIS TO RUN ON PICO*/
-/*#include <stdlib.h>
+#include <stdlib.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>*/
+#include <arpa/inet.h>
 
 /*
 SLAVE PHASES:
@@ -90,14 +91,14 @@ void callback_server();
 
 const char* ssid = "SmartLeds";
 const char* password = "password";
-const char* main_server_address = "192.136.60.133";
+const char* main_server_address = "192.136.60.51";
 
 // Set to 1 if the main server calls a forced stop
 uint8_t forced_stop = 0;
 
 int main()
 {
-	stdio_init_all();
+/*	stdio_init_all();
 
 	// Connect to the wifi
 	if ( cyw43_arch_wifi_connect_timeout_ms( ssid, password, CYW43_AUTH_WPA2_AES_PSK, 10000 ) )
@@ -113,7 +114,7 @@ int main()
 	// Start the second core
 	// The second core is a server that listens for main servers forced stop
 	// multicore_launch_core1( &callback_server );
-
+*/
 	uint8_t return_status = 0;
 
 	slave_connection_t slave_informations;
@@ -128,18 +129,20 @@ int main()
 
 	struct sockaddr_in server_address;
 	server_address.sin_family = AF_INET;
+	server_address.sin_addr.s_addr = inet_addr( main_server_address );
 	server_address.sin_port = 1234;
 
 	if ( connect( socket_descriptor, ( struct sockaddr* )&server_address, sizeof( server_address ) ) == -1 )
 	{
 		printf( "Could not connect to main server\n" );
+		return 0;
 	}
 
 	// Check that the creation of the socket was sucessfull
 	if ( socket_descriptor < 0 )
 	{
 		printf( "There was an error\n" );
-		cyw43_arch_deinit();
+//		cyw43_arch_deinit();
 		return 0;
 	}
 
@@ -150,7 +153,7 @@ int main()
 	if ( !return_status )
 	{
 		printf( "There was an error while sending basic informations\n" );
-		cyw43_arch_deinit();
+//		cyw43_arch_deinit();
 		return 0;
 	}
 
@@ -161,7 +164,7 @@ int main()
 	if ( !return_status )
 	{
 		printf( "There was an error while recivig the animation descriptor\n" );
-		cyw43_arch_deinit();
+//		cyw43_arch_deinit();
 		return 0;
 	}
 
@@ -173,7 +176,7 @@ int main()
 	// Play the animation
 	return_status = play_animation( socket_descriptor, &animation_descriptor );
 
-	cyw43_arch_deinit();
+//	cyw43_arch_deinit();
 }
 
 uint8_t send_slave_connection_informations( int32_t socket_descriptor, slave_connection_t slave_informations )

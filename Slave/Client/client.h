@@ -11,7 +11,7 @@
 
 typedef struct
 {
-	struct tcp_pcb* tcp_pcb;
+	struct tcp_pcb* server_pcb;
 	ip_addr_t server_address;
 	uint8_t* buffer;
 } client_t;

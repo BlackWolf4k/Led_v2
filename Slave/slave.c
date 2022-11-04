@@ -9,6 +9,21 @@
 
 #include "./Client/client.h"
 
+typedef struct
+{
+	uint32_t number_of_lines;
+	uint32_t line_length;
+	uint8_t delay;
+	uint8_t repeat;
+	uint8_t* animation;
+} animation_descriptor_t;
+
+typedef struct
+{
+	uint8_t id;
+	char ip_address[16];
+} slave_connection_t;
+
 // Start the connection with the main server
 // Send basic informations about the slave
 // Requires the slave informations and the socket where to send data
@@ -36,6 +51,9 @@ uint8_t play_animation( int32_t socket_descriptor, animation_descriptor_t* anima
 // Returns nothing
 void callback_server();
 
+const char* ssid = "SmartLeds";
+const char* password = "password";
+
 int main()
 {
 	stdio_init_all();
@@ -43,9 +61,25 @@ int main()
 	// Initialize the wifi
 	cyw43_arch_init();
 
-	// Connect to the server access point
-	if ( cyw43_arch_wifi_connect_timeout_ms( WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000 ) )
+	// Start Blink
+	for ( int i = 0; i < 4; i++ )
 	{
+		cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+        sleep_ms(250);
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+        sleep_ms(250);
+	}
+
+	// Connect to the server access point
+	if ( cyw43_arch_wifi_connect_timeout_ms( ssid, password, CYW43_AUTH_WPA2_AES_PSK, 10000 ) )
+	{
+		for ( int i = 0; i < 2; i++ )
+		{
+			cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+        	sleep_ms(1000);
+        	cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+        	sleep_ms(500);
+		}
 		printf( "There was an error while connecting to the server\n" );
 		return 1;
 	}
@@ -58,7 +92,7 @@ int main()
 	// Stop the wifi
 	cyw43_arch_deinit();
 }
-
+/*
 uint8_t send_slave_connection_informations( int32_t socket_descriptor, slave_connection_t slave_informations )
 {
 	int8_t bytes_sent = 0;
@@ -165,5 +199,5 @@ uint8_t play_animation( int32_t socket_descriptor, animation_descriptor_t* anima
 			printf( "\n" );
 	}
 }
-
+*/
 void callback_server();
