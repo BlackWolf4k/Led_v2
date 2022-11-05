@@ -1,6 +1,10 @@
 # import network
 import socket
 import time
+# To handle structures easly
+
+from Client.client import *
+import Server
 
 
 # SLAVE PHASES:
@@ -12,50 +16,52 @@ import time
 # 5. If a force quit message is sent, the slave repeats from 1
 # 5. If the animation has ended the slave repeats from 1
 
-# ANIMATION DESCRIPTOR
-# number_of_lines: 	the number of lines in the file
-# line_length:		the length of a single line
-# repeat: 			does the animation repeat ( 0 - 254: number of times to repeat, 255: loop )
-# colors: 			pointer to the colors matrix
-# delays: 			pointer to the delays matrix
+id = 0
 
-class animation_descriptor:
-	# Load from the buffer of the connection the animation descriptor informations
-	def load_descriptor( self, buffer ):
-		self.number_of_lines = buffer[ 0 : 4 ] # First four bytes, integer size
-		self.line_length = buffer[ 4 : 8 ] # Second four bytes, integer size
-		self.repeat = buffer[ 8 : 9 ] # Signles byte
-		self.delays = buffer[ 9 : 10 ] # Single byte
+def slave_client():
+	# Create the socket
+	socket_descriptor = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+
+	# Connect to the main server
+	socket_descriptor.connect( ( "127.0.0.1", 53764 ) ) # Change this to wlan gateway ip
+
+	# Send the slave connection descriptor
+	status_code = send_connection_descriptor( socket_descriptor, id, "255.255.255.255" ) # Change this with wlan local ip
+
+	# Check that the sending of the connection descriptor returned a success value
+	if ( not status_code ):
+		print( "Error" )
 		return
 
-# Start the connection with the main server
-# Send basic informations about the slave
-# Requires the slave informations and the socket where to send data
-# Return a status code where the sending was sucessfull ( 0: error )
-def send_slave_connection_informations( socket_descriptor, slave_informations ):
-	return 1
+	# Recive the animation descriptor
+	animation_descriptor = recive_animation_descriptor( socket_descriptor )
 
-# Recive the animation descriptor from the main server
-# Requires a argument where to store the animation descriptor and the socket where to send data
-# Return a status code where the reciving was sucessfull ( 0: error )
-def recive_animation_descriptor( socket_descriptor, animation_descriptor ):
-	return 1
+	# Check that the reciving of the animation descriptor was not None
+	if ( animation_descriptor == None ):
+		print( "Error" )
+		return
+	
+	# Recive the animation
+	animation = recive_animation( socket_descriptor, animation_descriptor )
 
-# Recive the animation colors and delays from the main server
-# Requires the animation descriptor as argument and the socket where to send data
-# Return a status code where the reciving was sucessfull ( 0: error )
-def recive_animation( socket_descriptor, animation_descriptor ):
-	return 1
+	# Check that the reciving of the animation was not None
+	if ( animation == None ):
+		print( "Error" )
+		return
+	
+	print( animation )
+	
+	# Play the animation
 
-# Play the animation
-# Requires as argument the animation descriptor and the socket where to sand data
-# Returns a status code ( 0: animation ended, 1: main server forced to quit, 0: error )
-def play_animation( socket_descriptor, animation_descriptor ):
-	return 1
+	# Animation playing ended
+	# Repeat
 
-# Check if the main server calls a forced stop
-# The value at 0x is set to 1 for forced stop, else 0
-# Requires no argument
-# Returns nothing
-def callback_server():
-	return 1
+	return
+
+def slave_server():
+	return
+
+# Main
+
+if __name__ == '__main__':
+	slave_client()

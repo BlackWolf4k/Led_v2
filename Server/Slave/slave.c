@@ -106,7 +106,7 @@ void* handle_slave( void* socket_descriptor )
 
 	slave_connection_t slave_connection = *( ( slave_connection_t* )buffer );
 
-	printf( "Recived basic infromations\n" );
+	printf( "Recived basic infromations from slave: %u\n", ( uint32_t )( slave_connection.id ) );
 
 	// Get the slave descriptor
 	slave_t slave = get_slave( slave_connection.id, slave_connection.ip_address );
