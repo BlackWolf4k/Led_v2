@@ -4,7 +4,8 @@ import time
 # To handle structures easly
 
 from Client.client import *
-import Server
+from Server.server import *
+from Led.led import *
 
 
 # SLAVE PHASES:
@@ -19,39 +20,42 @@ import Server
 id = 0
 
 def slave_client():
-	# Create the socket
-	socket_descriptor = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+	# Repeat untill the main server doesn't tell to turn off
+	while ( server_callback != 2 ):
+		# Create the socket
+		socket_descriptor = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 
-	# Connect to the main server
-	socket_descriptor.connect( ( "127.0.0.1", 53764 ) ) # Change this to wlan gateway ip
+		# Connect to the main server
+		socket_descriptor.connect( ( "127.0.0.1", 53764 ) ) # Change this to wlan gateway ip
 
-	# Send the slave connection descriptor
-	status_code = send_connection_descriptor( socket_descriptor, id, "255.255.255.255" ) # Change this with wlan local ip
+		# Send the slave connection descriptor
+		status_code = send_connection_descriptor( socket_descriptor, id, "255.255.255.255" ) # Change this with wlan local ip
 
-	# Check that the sending of the connection descriptor returned a success value
-	if ( not status_code ):
-		print( "Error" )
-		return
+		# Check that the sending of the connection descriptor returned a success value
+		if ( not status_code ):
+			print( "Error" )
+			return
 
-	# Recive the animation descriptor
-	animation_descriptor = recive_animation_descriptor( socket_descriptor )
+		# Recive the animation descriptor
+		animation_descriptor = recive_animation_descriptor( socket_descriptor )
 
-	# Check that the reciving of the animation descriptor was not None
-	if ( animation_descriptor == None ):
-		print( "Error" )
-		return
+		# Check that the reciving of the animation descriptor was not None
+		if ( animation_descriptor == None ):
+			print( "Error" )
+			return
 	
-	# Recive the animation
-	animation = recive_animation( socket_descriptor, animation_descriptor )
+		# Recive the animation
+		animation = recive_animation( socket_descriptor, animation_descriptor )
 
-	# Check that the reciving of the animation was not None
-	if ( animation == None ):
-		print( "Error" )
-		return
+		# Check that the reciving of the animation was not None
+		if ( animation == None ):
+			print( "Error" )
+			return
 	
-	print( animation )
+		print( animation )
 	
-	# Play the animation
+		# Play the animation
+		status_code = play_animation( animation, animation_descriptor )
 
 	# Animation playing ended
 	# Repeat
@@ -59,9 +63,11 @@ def slave_client():
 	return
 
 def slave_server():
+	start_server()
 	return
 
 # Main
-
 if __name__ == '__main__':
+	server_callback = False
 	slave_client()
+	slave_server()
