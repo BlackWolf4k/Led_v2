@@ -3,18 +3,21 @@ import socket
 # To handle structures easly
 from ctypes import *
 
+from main import wlan, generals
+
 # Value set by main server
 # 0: go ,1: get new animation, 2: turn off
 server_callback = 0
 
 def start_server():
 	global server_callback
+	global wlan
 
 	# Createthe socket descriptor
 	socket_descriptor = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 
 	# Bind the connection
-	socket_descriptor.bind( ( "127.0.0.1", 1233 ) ) # Replace ip with wlan ip
+	socket_descriptor.bind( ( wlan.ifconfig()[0], generals["server_port"] ) ) # Replace ip with wlan ip
 
 	# Start to listen on the connection
 	socket_descriptor.listen()
