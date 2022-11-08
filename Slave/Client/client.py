@@ -7,8 +7,8 @@ from ctypes import *
 #id: 			the id of the slave
 #ip_address: 	the ip address of the slave
 
-class slave_descriptor_t( Structure ):
-	_fields_ = [ ( 'id', c_uint8 ), ( 'ip_address', c_char * 16 ) ]
+class slave_descriptor_t( struct ):
+	_fields_ = [ ( 'id', UINT8 ), ( 'ip_address', CHAR * 16 ) ]
 
 # ANIMATION DESCRIPTOR
 # number_of_lines: 	the number of lines in the file
@@ -17,8 +17,8 @@ class slave_descriptor_t( Structure ):
 # colors: 			pointer to the colors matrix
 # delays: 			pointer to the delays matrix
 
-class animation_descriptor_t( Structure ):
-	_fields_ = [ ( 'number_of_lines', c_uint32 ), ( 'line_length', c_uint32 ), ( 'delay', c_uint8 ), ( 'repeat', c_uint8 ) ]
+class animation_descriptor_t( struct ):
+	_fields_ = [ ( 'number_of_lines', UINT32 ), ( 'line_length', UINT32 ), ( 'delay', UINT8 ), ( 'repeat', UINT8 ) ]
 
 # Send the slave connection descriptor
 # Requires as argument the socket with the main server, the id and the ip address

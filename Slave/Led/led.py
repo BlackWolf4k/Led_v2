@@ -2,9 +2,8 @@ import time
 import neopixel
 from machine import Pin
 
-from Server.server import server_callback
-from Client.client import animation_descriptor_t
-from main import generals
+from client import animation_descriptor_t
+from shared_informations import server_callback, generals
 
 # Control Pin is GPIO 0
 control_pin = 0

@@ -3,11 +3,8 @@ import socket
 # To handle structures easly
 from ctypes import *
 
-from main import wlan, generals
-
-# Value set by main server
-# 0: go ,1: get new animation, 2: turn off
-server_callback = 0
+from main import wlan
+from shared_informations import generals, server_callback
 
 def start_server():
 	global server_callback
