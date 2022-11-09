@@ -8,7 +8,7 @@ from ctypes import *
 #ip_address: 	the ip address of the slave
 
 class slave_descriptor_t( struct ):
-	_fields_ = [ ( 'id', UINT8 ), ( 'ip_address', CHAR * 16 ) ]
+	_fields_ = [ ( 'id', UINT8 ), ( 'ip_address', INT8 * 16 ) ]
 
 # ANIMATION DESCRIPTOR
 # number_of_lines: 	the number of lines in the file

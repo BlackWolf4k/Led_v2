@@ -49,7 +49,7 @@ void slave_handler_subprocess()
 	
 	printf( "Binding Connection for Slaves\n" );
 
-	status_code = bind_connection( &socket_descriptor, "127.0.0.1", 1234 );
+	status_code = bind_connection( &socket_descriptor, "192.168.0.1", 1234 );
 
 	// Check that the binding was sucessfull
 	if ( !status_code )

@@ -11,7 +11,7 @@ C_HEADERS = $(wildcard 	./*.h)
 OBJ = 	${C_SOURCES:.c=.o}
 
 server.elf: ${OBJ}
-	gcc -Wall ${OBJ} -o server.elf
+	gcc -Wall -pthread ${OBJ} -o server.elf
 
 %.o: %.c ${C_HEADERS}
 	${CC} ${CFLAGS} $< -o $@
