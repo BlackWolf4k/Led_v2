@@ -7,35 +7,29 @@ from ctypes import *
 #id: 			the id of the slave
 #ip_address: 	the ip address of the slave
 
-class slave_descriptor_t( struct ):
-	_fields_ = [ ( 'id', UINT8 ), ( 'ip_address', INT8 * 16 ) ]
-
 # ANIMATION DESCRIPTOR
 # number_of_lines: 	the number of lines in the file
 # line_length:		the length of a single line
 # repeat: 			does the animation repeat ( 0 - 254: number of times to repeat, 255: loop )
-# colors: 			pointer to the colors matrix
 # delays: 			pointer to the delays matrix
 
-class animation_descriptor_t( struct ):
-	_fields_ = [ ( 'number_of_lines', UINT32 ), ( 'line_length', UINT32 ), ( 'delay', UINT8 ), ( 'repeat', UINT8 ) ]
+animation_descriptor_t = {
+        "number_of_lines" : 0 | INT32,
+        "line_length" : 4 | INT32,
+        "delay" : 8 | UINT8,
+        "repeat" : 9 | UINT8
+}
 
 # Send the slave connection descriptor
 # Requires as argument the socket with the main server, the id and the ip address
 # Returns a status code ( 0: failure )
 def send_connection_descriptor( socket_descriptor, slave_id, ip_address ):
-	# Create the slave descriptor
-	slave_descriptor = slave_descriptor_t()
-
-	# Set the values
-	slave_descriptor.id = slave_id
-	slave_descriptor.ip_address = ip_address.encode() # Encode for the sending
-
 	# Send the values
-	bytes_sent = socket_descriptor.send( slave_descriptor )
+	bytes_sent = socket_descriptor.send( ( chr( slave_id ) + ip_address ).encode() )
 
 	# Check that the sending was sucessfull
-	if ( bytes_sent < 17 ):
+	# 8 is the minimun length of sendable informations
+	if ( bytes_sent < 8 ):
 		return 0 # There was an error while sending, return None
 
 	# Everything went fine, return 1 as ok code
@@ -49,7 +43,7 @@ def recive_animation_descriptor( socket_descriptor ):
 	buffer = socket_descriptor.recv( 13 )
 
 	# Decode the recived buffer
-	animation_descriptor = animation_descriptor_t.from_buffer_copy( buffer )
+	animation_descriptor = struct( addressof( buffer ), animation_descriptor_t, LITTLE_ENDIAN )
 
 	# Check that the reciving was sucessfull
 	if ( animation_descriptor.number_of_lines == 0 ):
@@ -66,12 +60,15 @@ def recive_animation( socket_descriptor, animation_descriptor ):
 	# Create the animation dictionary
 	animation = {}
 
+	# I just don't know why
+	socket_descriptor.recv( 32 )
+
 	# Start reciving line by line
 	for i in range( 0, animation_descriptor.number_of_lines, 1 ):
 		animation[i] = b''
 
 		# Recive piece of animation
-		buffer = socket_descriptor.recv( animation_descriptor.line_length )
+		buffer = socket_descriptor.recv( animation_descriptor.line_length + 1 )
 
 		# Check that the reciving was sucessfull
 		# if ( buffer.len <= animation_descriptor.line_length ): # or buffer.len > animation_descriptor.line_length ):

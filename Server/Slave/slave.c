@@ -58,7 +58,6 @@ typedef struct
 	uint8_t repeat;
 } animation_file_descriptor_t;
 
-// Animation header size ( +1 for the \n )
 #define ANIMATION_HEADER_SIZE ( sizeof( animation_file_descriptor_t ) )
 
 /*PRIVATE FUNCTIONS DECLARATION*/
@@ -349,7 +348,7 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 
 	// Alloc a Buffer to store informations
 	uint8_t* buffer = NULL;
-	buffer = ( uint8_t* )calloc( ANIMATION_HEADER_SIZE + 1, sizeof( uint8_t ) );
+	buffer = ( uint8_t* )calloc( ANIMATION_HEADER_SIZE, sizeof( uint8_t ) );
 
 	// Check that the memory allocation was sucessfull
 	if ( buffer == NULL )
@@ -361,7 +360,7 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 	int32_t bytes_sent = 0;
 
 	// Read the header
-	if ( fread( buffer, ANIMATION_HEADER_SIZE + 1, 1, file ) == 0 ) // +1 for \n
+	if ( fread( buffer, ANIMATION_HEADER_SIZE, 1, file ) == 0 ) // +1 for \n
 		return 1;
 	
 	// Copy the header in a variable
@@ -376,13 +375,13 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 
 	// Resize the buffer
 	free( buffer );
-	buffer = ( uint8_t* )calloc( animation_file_descriptor.line_length + 1, sizeof( uint8_t ) );
+	buffer = ( uint8_t* )calloc( animation_file_descriptor.line_length, sizeof( uint8_t ) );
 
 	// Store the bytes sent
 	bytes_sent = 0;
 
 	// Read the line and check that it exitst
-	while ( fgets( buffer, animation_file_descriptor.line_length + 1, file ) != NULL )
+	while ( fgets( buffer, animation_file_descriptor.line_length, file ) != NULL )
 	{
 		// Make sure to sent the whole line
 		while ( ( int32_t )( animation_file_descriptor.line_length - bytes_sent ) > 0 )
@@ -397,7 +396,7 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 
 		bytes_sent = 0;
 		// Clear the buffer
-		bzero( buffer, animation_file_descriptor.number_of_lines + 1 );
+		bzero( buffer, animation_file_descriptor.number_of_lines );
 	}
 	
 	// Free the buffer

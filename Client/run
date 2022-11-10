@@ -1,0 +1,6 @@
+#!/bin/sh
+rm -rf animation.dat
+gcc -Wall -o animation_writer.elf animation_writer.c
+./animation_writer.elf
+rm -rf animation_writer.elf
+hexdump animation.dat
