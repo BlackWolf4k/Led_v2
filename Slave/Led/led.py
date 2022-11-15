@@ -5,10 +5,7 @@ from machine import Pin
 from client import animation_descriptor_t
 from shared_informations import server_callback, generals
 
-# Control Pin is GPIO 0
-control_pin = 0
-
-leds = neopixel.NeoPixel( Pin( control_pin, Pin.OUT ), generals["number_of_leds"] )
+leds = neopixel.NeoPixel( Pin( generals["control_pin"], Pin.OUT ), generals["number_of_leds"] )
 
 # Play a animation
 # Requires the animation and the animation descriptor as arguments
@@ -20,7 +17,8 @@ def play_animation( animation, animation_descriptor ):
 	# Play the animation
 	# Stop if the main server or there are no more animation repetitions
 	while ( server_callback == 0 and animation_descriptor.repeat > 0 ):
-		animation_section += 1
+		# Encrease the stage of the animation
+		animation_section = ( animation_section + 1 ) % animation_descriptor.number_of_lines
 		# Decrease number of repetitions to do, unsless it is in loop mode
 		if ( animation_descriptor.repeat != 255 ):
 			animation_descriptor.repeat -= 1

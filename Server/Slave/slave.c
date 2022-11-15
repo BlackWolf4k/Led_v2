@@ -111,6 +111,11 @@ void* handle_slave( void* socket_descriptor )
 	slave_t slave = get_slave( slave_connection.id, slave_connection.ip_address );
 
 	// Check that the slave research was sucessfull
+	if ( slave.id == 0 )
+	{
+		printf( "Invalid slave id" );
+		exit( 1 );
+	}
 
 	printf( "Searching for the next animation\n" );
 
@@ -172,8 +177,8 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 {
 	// Slave to return in case of errors
 	slave_t slave_error;
-	// Give to the slave the id of -1, it means error
-	slave_error.id = -1;
+	// Give to the slave the id of 0, it means error
+	slave_error.id = 0;
 
 	// Open the file
 	FILE* file = NULL;

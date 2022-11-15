@@ -21,6 +21,10 @@ void slave_handler_subprocess();
 // Subprocess to handle the clients server
 void client_handler_subprocess();
 
+// A deamon to check that everything is running sucessfully
+// I a subprocess fails it will run it back
+void deamon();
+
 int main()
 {
 	printf( "Starting...\n" );
