@@ -34,7 +34,7 @@ color_t colors[6] = { { 0, 255, 0 }, { 0, 255, 255 }, { 0, 0, 255 }, { 255, 0, 2
 uint32_t number_of_colors = 6;
 
 // Number of leds
-uint32_t number_of_leds = 150;
+uint32_t number_of_leds = 296;
 
 #define OFFSET( x ) ( ( ( x % number_of_colors ) * number_of_leds ) / number_of_colors )
 
@@ -58,22 +58,19 @@ int main()
 	animation_file_descriptor_t animation_file_descriptor;
 	animation_file_descriptor.delay = 100; // 100 ms
 	animation_file_descriptor.repeat = 255; // loop
-	animation_file_descriptor.line_length = 150 * 3;
-	animation_file_descriptor.number_of_lines = 2;
+	animation_file_descriptor.line_length = number_of_leds * 3;
+	animation_file_descriptor.number_of_lines = number_of_leds;
 
 	// Write the animation file descriptor
 	printf( "Writed %ld bytes\n", fwrite( &animation_file_descriptor, sizeof( animation_file_descriptor_t ), 1, file ) );
 
-	// Generate the array of the colors that will be displayed
-	// Create the array
+	/* Generate the array of the colors that will be displayed */
+	// Create the array of colors
 	color_t* leds_colors = NULL;
-	color_t* new_color = NULL;
-	// Allocate space for a future use variable too
 	leds_colors = ( color_t* )calloc( number_of_leds, sizeof( color_t ) );
-	new_color = ( color_t* )calloc( 1, sizeof( color_t ) );
 
 	// Check that the memory allocation was sucessfull
-	if ( leds_colors == NULL || new_color == NULL )
+	if ( leds_colors == NULL )
 	{
 		printf( "Memory allocation error\n" );
 		return 1;
@@ -110,5 +107,19 @@ int main()
 	{
 		printf( "Writed %ld bytes\n", fwrite( leds_colors + i, sizeof( color_t ), number_of_leds - i, file ) );
 		printf( "Writed %ld bytes\n", fwrite( leds_colors, sizeof( color_t ), i, file ) );
+	}
+
+	// Close the file
+	fclose( file );
+	// Free the memory
+	free( leds_colors );
+
+	color_t color_read;
+	file = fopen( "./rainbow.dat", "r" );
+	fread( &animation_file_descriptor, sizeof( animation_file_descriptor_t ), 1, file );
+	for ( uint32_t i = 0; i < animation_file_descriptor.number_of_lines * animation_file_descriptor.line_length / 3; i++ )
+	{
+		fread( &color_read, sizeof( color_t ), 1, file );
+		printf( "%hhu, %hhu, %hhu\n", color_read.red, color_read.green, color_read.blue );
 	}
 }

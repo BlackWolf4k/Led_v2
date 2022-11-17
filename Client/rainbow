@@ -3,4 +3,4 @@ rm -rf rainbow.dat
 gcc -Wall -o rainbow_maker.elf rainbow_maker.c
 ./rainbow_maker.elf
 rm -rf rainbow_maker.elf
-hexdump rainbow.dat
+hexdump -C rainbow.dat
