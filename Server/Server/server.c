@@ -6,6 +6,8 @@
 // For threads
 #include <pthread.h>
 
+/*USE SO_REUSEADDR AND setsockopt*/
+
 int32_t create_socket()
 {
 	// Store the socket descriptor
@@ -13,6 +15,9 @@ int32_t create_socket()
 
 	// Create the socket
 	socket_descriptor = socket( AF_INET, SOCK_STREAM, 0 );
+
+	if ( setsockopt( socket_descriptor, SOL_SOCKET, SO_REUSEADDR, &( int ){ 1 }, sizeof( int ) ) || setsockopt( socket_descriptor, SOL_SOCKET, SO_REUSEPORT, &( int ){ 1 }, sizeof( int ) ) )
+		return 0;
 
 	// Check if the creation of the socket was sucessfull
 	if ( socket_descriptor < 0 )
