@@ -62,7 +62,7 @@ int main()
 	animation_file_descriptor.number_of_lines = number_of_leds;
 
 	// Write the animation file descriptor
-	printf( "Writed %ld bytes\n", fwrite( &animation_file_descriptor, sizeof( animation_file_descriptor_t ), 1, file ) );
+	printf( "Writed %ld\n", fwrite( &animation_file_descriptor, sizeof( animation_file_descriptor_t ), 1, file ) );
 
 	/* Generate the array of the colors that will be displayed */
 	// Create the array of colors
@@ -105,8 +105,8 @@ int main()
 	// Save A LOT of calculations
 	for ( uint32_t i = 0; i < animation_file_descriptor.number_of_lines; i++ )
 	{
-		printf( "Writed %ld bytes\n", fwrite( leds_colors + i, sizeof( color_t ), number_of_leds - i, file ) );
-		printf( "Writed %ld bytes\n", fwrite( leds_colors, sizeof( color_t ), i, file ) );
+		printf( "Writed %ld\n", fwrite( leds_colors + i, sizeof( color_t ), number_of_leds - i, file ) );
+		printf( "Writed %ld\n", fwrite( leds_colors, sizeof( color_t ), i, file ) );
 	}
 
 	// Close the file

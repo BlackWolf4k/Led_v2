@@ -1,0 +1,5 @@
+#!/bin/sh
+gcc -Wall -o slaves_writer.elf basic_slave_writer.c
+./slaves_writer.elf
+rm -rf slaves_writer.elf
+hexdump -C ../Server/execution_space/slaves.dat

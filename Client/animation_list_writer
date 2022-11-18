@@ -1,0 +1,6 @@
+#!/bin/sh
+rm -rf ../Server/execution_space/animations_list.dat
+gcc -Wall -o animation_list_writer.elf basic_animation_list_writer.c
+./animation_list_writer.elf
+rm -rf animation_list_writer.elf
+hexdump -C ../Server/execution_space/animations_list.dat

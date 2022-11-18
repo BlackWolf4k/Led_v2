@@ -20,10 +20,10 @@ typedef struct
 /*
 SLAVES DESCRIPTOR:
 id: 				identifier of a slave
-actual_animation:	the currently plaing animation
-status: 			if waiting for something, or plaing and animation
-animation_list: 	the id of the animation list
 ip_address: 		ip address of the slave
+status: 			if waiting for something, or plaing an animation
+animation_list: 	the id of the animation list
+actual_animation:	the currently plaing animation
 */
 typedef struct
 {
@@ -82,7 +82,7 @@ void* handle_slave( void* socket_descriptor )
 {
 	printf( "Started comunication with slave\n" );
 
-	uint32_t bytes_recived = 0;
+	int32_t bytes_recived = 0;
 
 	// Create a buffer to store informations
 	uint8_t* buffer = NULL;
@@ -117,19 +117,29 @@ void* handle_slave( void* socket_descriptor )
 		exit( 1 );
 	}
 
+	printf( "Connection from slave: %hhu, ip: %s, animation playlist: %hhu\n", slave.id, slave.ip_address, slave.animation_list );
+
 	printf( "Searching for the next animation\n" );
 
 	// Get next animation
 	char* file_name = get_next_animation( slave.animation_list, slave.actual_animation );
 
 	// Check that the next animation was found
+	if ( file_name == "" )
+	{
+		printf( "Invalid animation name" );
+		exit( 1 );
+	}
 
 	printf( "Sending the next animation to the slave\n" );
 
 	// Send the animation
-	send_file( file_name, *( int32_t* )socket_descriptor );
-
 	// Check that the sending was sucessfull
+	if ( send_file( file_name, *( int32_t* )socket_descriptor ) )
+	{
+		printf( "Error while sending the file to the slave" );
+		exit( 1 );
+	}
 
 	printf( "Closing connection with slave\n" );
 
@@ -198,21 +208,24 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 	// Lock
 	pthread_mutex_lock( &mutex );
 
-	// Read each element in the file untill slave with corresponding ip is found
+	// Read each element in the file untill slave with corresponding id is found
 	while ( fread( &slave, sizeof( slave_t ), 1, file ) != 0 )
 	{
 		// Check that the slave id is the same of the one read
 		if ( slave.id == slave_id )
 		{
 			// Check if the slave informations need to be updated
-			if ( strcmp( slave.ip_address, ip_address ) != 0 )
+			if ( strcmp( slave.ip_address, ip_address ) != 0 ) // No the same ip
 			{
 				// Update the ip
 				strcpy( slave.ip_address, ip_address );
 
 				// Update the slave on the file
 				fseek( file, -1 * sizeof( slave_t ), SEEK_CUR );
-				if ( fwrite( &slave, sizeof( slave_t ), 1, file ) != sizeof( slave_t ) )
+
+				// Write the updated slave
+				// Check that the writing was sucessfull
+				if ( fwrite( &slave, sizeof( slave_t ), 1, file ) != 1 )
 					printf( "Something went wrong while updating the slaves informations\n" );
 			}
 			// Unlock
@@ -225,6 +238,7 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 		}
 	}
 
+	/*
 	// No slave with the corresponding id was found
 	// Add it
 	// Copy the informations about the slave
@@ -233,8 +247,9 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 	strcpy( new_slave.ip_address, ip_address );
 
 	// Write the slave
-	if ( fwrite( &new_slave, sizeof( slave_t ), 1, file ) != sizeof( slave_t ) )
+	if ( fwrite( &new_slave, sizeof( slave_t ), 1, file ) != 1 )
 		printf( "Something went wrong while writing the slave\n" );
+	*/
 
 	// Unlock
 	pthread_mutex_unlock( &mutex );

@@ -30,51 +30,51 @@ int main()
 	descriptor.delay = 10;
 	descriptor.repeat = 255;
 
-	printf( "Written: %d bytes\n" , fwrite( &descriptor, sizeof( descriptor ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &descriptor, sizeof( descriptor ), 1, file ) );
 
 	fputc( '\n', file );
 
 	color_t led;
 
 	led.red = 255; led.green = 255; led.blue = 0;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	led.red = 255; led.green = 0; led.blue = 255;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	led.red = 255; led.green = 255; led.blue = 255;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	led.red = 0; led.green = 255; led.blue = 255;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	fputc( '\n', file );
 
 	led.red = 0; led.green = 255; led.blue = 255;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	led.red = 255; led.green = 255; led.blue = 0;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	led.red = 255; led.green = 0; led.blue = 255;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	led.red = 255; led.green = 255; led.blue = 255;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	fputc( '\n', file );
 
 	led.red = 255; led.green = 255; led.blue = 255;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	led.red = 0; led.green = 255; led.blue = 255;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	led.red = 255; led.green = 255; led.blue = 0;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 	led.red = 255; led.green = 0; led.blue = 255;
-	printf( "Written: %d bytes\n" , fwrite( &led, sizeof( led ), 1, file ) );
+	printf( "Written: %d\n" , fwrite( &led, sizeof( led ), 1, file ) );
 
 
 	fclose( file );
