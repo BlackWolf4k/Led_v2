@@ -6,8 +6,6 @@
 // For threads
 #include <pthread.h>
 
-/*USE SO_REUSEADDR AND setsockopt*/
-
 int32_t create_socket()
 {
 	// Store the socket descriptor
@@ -16,6 +14,7 @@ int32_t create_socket()
 	// Create the socket
 	socket_descriptor = socket( AF_INET, SOCK_STREAM, 0 );
 
+	// If the server crashed and tcp is still waiting to close socket, force the creation of a new one
 	if ( setsockopt( socket_descriptor, SOL_SOCKET, SO_REUSEADDR, &( int ){ 1 }, sizeof( int ) ) || setsockopt( socket_descriptor, SOL_SOCKET, SO_REUSEPORT, &( int ){ 1 }, sizeof( int ) ) )
 		return 0;
 
@@ -69,7 +68,7 @@ pthread_t accept_connection( int32_t* socket_descriptor, void*( *handle_function
 {
 	pthread_t thread_id = 0;
 
-	// Create plase where to store new socket
+	// Create place where to store new socket
 	int32_t* new_socket_descriptor = NULL;
 	new_socket_descriptor = calloc( 1, sizeof( uint32_t ) );
 
@@ -99,6 +98,6 @@ pthread_t accept_connection( int32_t* socket_descriptor, void*( *handle_function
 
 void connection_error()
 {
-	perror( "An error has occurred\n" ); // Print the occurred error
-	exit( 0 );
+	perror( "An error has occurred\n[Socket Error]" ); // Print the occurred error
+	exit( 1 );
 }

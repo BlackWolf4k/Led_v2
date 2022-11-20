@@ -49,6 +49,7 @@ number_of_line: 	the number of lines in the file
 line_length:		the length of a single line
 delay:				the delay between each change of led colors
 repeat: 			does the animation repeat ( 0 - 254: number of times to repeat, 255: loop )
+pattern:			animations with a repeating patter ( 0: none, 1: rainbow )
 */
 typedef struct
 {
@@ -56,6 +57,7 @@ typedef struct
 	uint32_t line_length;
 	uint8_t delay;
 	uint8_t repeat;
+	uint8_t pattern;
 } animation_file_descriptor_t;
 
 #define ANIMATION_HEADER_SIZE ( sizeof( animation_file_descriptor_t ) )

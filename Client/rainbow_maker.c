@@ -10,6 +10,7 @@ number_of_line: 	the number of lines in the file
 line_length:		the length of a single line
 delay:				the delay between each change of led colors
 repeat: 			does the animation repeat ( 0 - 254: number of times to repeat, 255: loop )
+pattern:			animations with a repeating patter ( 0: none, 1: rainbow )
 */
 typedef struct
 {
@@ -17,6 +18,7 @@ typedef struct
 	uint32_t line_length;
 	uint8_t delay;
 	uint8_t repeat;
+	uint8_t pattern;
 } animation_file_descriptor_t;
 
 typedef struct
@@ -59,7 +61,8 @@ int main()
 	animation_file_descriptor.delay = 100; // 100 ms
 	animation_file_descriptor.repeat = 255; // loop
 	animation_file_descriptor.line_length = number_of_leds * 3;
-	animation_file_descriptor.number_of_lines = number_of_leds;
+	animation_file_descriptor.number_of_lines = 1;
+	animation_file_descriptor.pattern = 1;
 
 	// Write the animation file descriptor
 	printf( "Writed %ld\n", fwrite( &animation_file_descriptor, sizeof( animation_file_descriptor_t ), 1, file ) );
@@ -102,8 +105,15 @@ int main()
 	//for ( uint32_t i = 0; i < number_of_leds; i++ )
 	//	printf( "%hhu, %hhu, %hhu\n", leds_colors[i].red, leds_colors[i].green, leds_colors[i].blue );
 
+	printf( "Writed %ld\n", fwrite( leds_colors, sizeof( color_t ), number_of_leds, file ) );
+
+	// Close the file
+	fclose( file );
+	// Free the memory
+	free( leds_colors );
+
 	// Save A LOT of calculations
-	for ( uint32_t i = 0; i < animation_file_descriptor.number_of_lines; i++ )
+	/*for ( uint32_t i = 0; i < animation_file_descriptor.number_of_lines; i++ )
 	{
 		printf( "Writed %ld\n", fwrite( leds_colors + i, sizeof( color_t ), number_of_leds - i, file ) );
 		printf( "Writed %ld\n", fwrite( leds_colors, sizeof( color_t ), i, file ) );
@@ -122,4 +132,5 @@ int main()
 		fread( &color_read, sizeof( color_t ), 1, file );
 		printf( "%hhu, %hhu, %hhu\n", color_read.red, color_read.green, color_read.blue );
 	}
+	*/
 }
