@@ -65,10 +65,16 @@ typedef struct
 /*PRIVATE FUNCTIONS DECLARATION*/
 
 // Get from the slave file the informations about a particular slave
-// It is researched based on the slave's id ( parameter ) and the slave's ip address
-// If no slave was found it will return a slave with id -1
+// It is researched based on the slave's id ( parameter )
+// If no slave was found it will return a slave with id 0
 // The id of a slave does not chagne, while the ip can, so the ip may be updated
-slave_t get_slave( uint32_t slave_id, char* ip_address );
+slave_t get_slave( uint32_t slave_id );
+
+// Update a slave
+// Requires as argument a slave object
+// The research of the slave to change is based on the id
+// If no slave with the same id is found will return a error code ( 0: error, 1: success )
+uint8_t update_slave( slave_t updated_slave );
 
 // Get the next animation of slave
 // The animation list number and the actual animation are needed
@@ -110,7 +116,7 @@ void* handle_slave( void* socket_descriptor )
 	printf( "Recived basic infromations from slave: %u\n", ( uint32_t )( slave_connection.id ) );
 
 	// Get the slave descriptor
-	slave_t slave = get_slave( slave_connection.id, slave_connection.ip_address );
+	slave_t slave = get_slave( slave_connection.id );
 
 	// Check that the slave research was sucessfull
 	if ( slave.id == 0 )
@@ -185,7 +191,7 @@ void* handle_slave( void* socket_descriptor )
 
 uint8_t recive_slave_descriptor();
 
-slave_t get_slave( uint32_t slave_id, char* ip_address )
+slave_t get_slave( uint32_t slave_id )
 {
 	// Slave to return in case of errors
 	slave_t slave_error;
@@ -216,20 +222,6 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 		// Check that the slave id is the same of the one read
 		if ( slave.id == slave_id )
 		{
-			// Check if the slave informations need to be updated
-			if ( strcmp( slave.ip_address, ip_address ) != 0 ) // No the same ip
-			{
-				// Update the ip
-				strcpy( slave.ip_address, ip_address );
-
-				// Update the slave on the file
-				fseek( file, -1 * sizeof( slave_t ), SEEK_CUR );
-
-				// Write the updated slave
-				// Check that the writing was sucessfull
-				if ( fwrite( &slave, sizeof( slave_t ), 1, file ) != 1 )
-					printf( "Something went wrong while updating the slaves informations\n" );
-			}
 			// Unlock
 			pthread_mutex_unlock( &mutex );
 
@@ -240,19 +232,6 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 		}
 	}
 
-	/*
-	// No slave with the corresponding id was found
-	// Add it
-	// Copy the informations about the slave
-	slave_t new_slave;
-	new_slave.id = slave_id;
-	strcpy( new_slave.ip_address, ip_address );
-
-	// Write the slave
-	if ( fwrite( &new_slave, sizeof( slave_t ), 1, file ) != 1 )
-		printf( "Something went wrong while writing the slave\n" );
-	*/
-
 	// Unlock
 	pthread_mutex_unlock( &mutex );
 	/* End of possible collision zone */
@@ -262,6 +241,60 @@ slave_t get_slave( uint32_t slave_id, char* ip_address )
 
 	// No slave was found, so return the slave with error code id
 	return slave_error;
+}
+
+uint8_t update_slave( slave_t updated_slave )
+{
+	// Open the file
+	FILE* file = NULL;
+	file = fopen( "slaves.dat", "r+" );
+
+	// Check that the file opening was sucessfull
+	if ( file == NULL )
+	{
+		perror( "[File Error]" );
+		return 0; // Return the slave with error code id
+	}
+	
+	// To store the readed slave
+	slave_t slave;
+
+	/* Start of possible collision zone */
+	// Lock
+	pthread_mutex_lock( &mutex );
+
+	// Read each element in the file untill slave with corresponding id is found
+	while ( fread( &slave, sizeof( slave_t ), 1, file ) != 0 )
+	{
+		// Check that the slave id is the same of the one read
+		if ( slave.id == updated_slave.id )
+		{
+			fseek( file, -1 * sizeof( slave_t ), SEEK_CUR );
+
+			// Write the updated slave
+			// Check that the writing was sucessfull
+			if ( fwrite( &slave, sizeof( slave_t ), 1, file ) != 1 )
+				printf( "Something went wrong while updating the slaves informations\n" );
+
+			// Unlock
+			pthread_mutex_unlock( &mutex );
+
+			// Close the file
+			fclose( file );
+
+			return 1;
+		}
+	}
+
+	// Unlock
+	pthread_mutex_unlock( &mutex );
+	/* End of possible collision zone */
+
+	// Close the file
+	fclose( file );
+
+	// No slave was found, so return the slave with error code id
+	return 0;
 }
 
 char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number )

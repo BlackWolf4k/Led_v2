@@ -15,10 +15,10 @@ from ctypes import *
 # pattern:			animations with a repeating patter ( 0: none, 1: rainbow )
 
 animation_descriptor_t = {
-        "number_of_lines" : 0 | INT32,
-        "line_length" : 4 | INT32,
-        "delay" : 8 | UINT8,
-        "repeat" : 9 | UINT8,
+		"number_of_lines" : 0 | INT32,
+		"line_length" : 4 | INT32,
+		"delay" : 8 | UINT8,
+		"repeat" : 9 | UINT8,
 		"pattern" : 10 | UINT8
 }
 
@@ -69,8 +69,19 @@ def recive_animation( socket_descriptor, animation_descriptor ):
 	for i in range( 0, animation_descriptor.number_of_lines, 1 ):
 		animation[i] = b''
 
-		# Recive piece of animation
-		buffer = socket_descriptor.recv( animation_descriptor.line_length + 1 )
+		# How many bytes where recived
+		recived  = 0
+
+		# Recive the whole line
+		while ( recived < animation_descriptor.number_of_lines ):
+			# Recive piece of animation
+			buffer = socket_descriptor.recv( animation_descriptor.line_length + 1 )
+
+			# Calculate bytes recived
+			recived += len( buffer )
+
+			# Append the animation piece
+			animation[i] += buffer
 
 		# Check that the reciving was sucessfull
 		# if ( buffer.len <= animation_descriptor.line_length ): # or buffer.len > animation_descriptor.line_length ):
@@ -78,9 +89,6 @@ def recive_animation( socket_descriptor, animation_descriptor ):
 
 		# Check if recived the whole animation line
 		# if ( buffer.len < animation_descriptor.line_length )
-		# Append the pice to the line
-		# Append the line
-		animation[i] += buffer
 
 	# Everything was fine, return the animation
 	return animation

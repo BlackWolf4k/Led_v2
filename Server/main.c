@@ -90,6 +90,8 @@ void deamon( int32_t* server_pids )
 		else if ( exit_code == 1 ) // Client server returned
 			server_pids[1] = start_subprocess( client_server ); // Run it back and store the pid
 	}
+
+	return;
 }
 
 void slave_server()
