@@ -133,7 +133,7 @@ void* handle_slave( void* socket_descriptor )
 	char* file_name = get_next_animation( slave.animation_list, slave.actual_animation );
 
 	// Check that the next animation was found
-	if ( file_name == "" )
+	if ( file_name + 1 == "" )
 	{
 		printf( "Invalid animation name" );
 		exit( 1 );
@@ -143,7 +143,7 @@ void* handle_slave( void* socket_descriptor )
 
 	// Send the animation
 	// Check that the sending was sucessfull
-	if ( send_file( file_name, *( int32_t* )socket_descriptor ) )
+	if ( send_file( file_name + 1, *( int32_t* )socket_descriptor ) )
 	{
 		printf( "Error while sending the file to the slave" );
 		exit( 1 );
@@ -155,26 +155,17 @@ void* handle_slave( void* socket_descriptor )
 	// Close the connection
 	close( *( int32_t* )socket_descriptor );
 
-	// Open the file
-	FILE* file = NULL;
-	file = fopen( "slaves.dat", "r+" );
+	//  Change the animation that has to be played
+	slave.actual_animation = file_name[0] + 1;
 
-	// Check that the file opening was sucessfull
-	// if ( file == NULL )
-	// 	return 0;
-
-	/* Start of possible collision zone */
-	// Lock
-	pthread_mutex_lock( &mutex );
-
-	printf( "Updating information about the slave\n" );
-
-	// Unlock
-	pthread_mutex_unlock( &mutex );
-	/* End of possible collision zone */
-
-	// Close the file
-	fclose( file );
+	// Update the slave
+	// Check that the updating was sucessfull
+	if ( !update_slave( slave ) )
+	{
+		// There was an error while updating the slaves informations
+		printf( "There was and error updating the slaves informations\n" )
+		exit( 1 );
+	}
 
 	// Free the socket
 	// Shouldn' t be here
@@ -188,8 +179,6 @@ void* handle_slave( void* socket_descriptor )
 }
 
 /*PRIVATE FUNCTIONS*/
-
-uint8_t recive_slave_descriptor();
 
 slave_t get_slave( uint32_t slave_id )
 {
@@ -327,7 +316,7 @@ char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number 
 
 	// Store the file name to return
 	char* file_name = NULL;
-	file_name = ( uint8_t* )calloc( ANIMATION_NAME_LENGTH, sizeof( uint8_t ) );
+	file_name = ( uint8_t* )calloc( ANIMATION_NAME_LENGTH + 1, sizeof( uint8_t ) );
 
 	// Check that the memory allocation was sucessfull
 	if ( file_name == NULL )
@@ -335,6 +324,10 @@ char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number 
 		perror( "[Memory Error]" );
 		return '\0';
 	}
+
+	// Encrease the filename by one character
+	// That character will store the number of the animation
+	file_name += 1;
 
 	printf( "Looking for animation number: %d\n", animation_number );
 
@@ -354,12 +347,19 @@ char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number 
 			// Check that there are enought animation
 			if ( animations - 1 < animation_number )
 			{
+				// Set the animation to search to the first one ( number 0 )
+				animation_number = 0
+				/*
 				// Close the file
 				fclose( file );
 				// Unlock
 				pthread_mutex_unlock( &mutex );
 				return '\0'; // Return empty string
+				*/
 			}
+
+			// Store the animation number to play
+			( file_name - 1 )[0] = animation_number;
 
 			// Clear out the list id
 			buffer += 2; // 1 of id, 1 for ';'
@@ -382,7 +382,7 @@ char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number 
 	// Close the file
 	fclose( file );
 
-	return file_name;
+	return file_name - 1;
 }
 
 uint8_t send_file( const char* animation_file, int32_t slave_socket )

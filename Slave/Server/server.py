@@ -20,10 +20,18 @@ def start_server():
 	socket_descriptor.listen()
 
 	# Accept connection untill the server doesn't ask to turn off
-	while ( server_callback != 2 ):
+	while ( server_callback != 3 ):
 		# Accept the connection
 		connection, address = socket_descriptor.accept()
 
 		# Check if connected
 		with connection:
-			server_callback = int( socket_descriptor.recv( 1 ).decode(), base = 16 )
+			# Recive the connection
+			buffer = socket_descriptor.recv( 1024 )
+
+			server_callback = 2
+
+			# Send a ok response
+			connection.send( "HTTP/1.0 200 OK\r\n".encode() )
+	# Exit
+	return

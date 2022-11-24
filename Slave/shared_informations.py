@@ -1,5 +1,5 @@
 # Value set by main server
-# 0: go ,1: get new animation, 2: turn off
+# 0: go ,1: get new animation, 2: turn off untill other request, 3 shut down
 server_callback = 0
 
 # General purpose infromations

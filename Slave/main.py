@@ -8,6 +8,9 @@ from client import *
 from led import *
 from shared_informations import *
 
+# To use both cores
+import _thread
+
 
 # SLAVE PHASES:
 # 1. The slave connects to the main server sending the ip
@@ -83,7 +86,7 @@ def slave_client():
 	global server_callback
 
 	# Repeat untill the main server doesn't tell to turn off
-	while ( server_callback != 2 ):
+	while ( server_callback != 3 and server_callback != 2 ):
 		# Try to connect to the main server
 		try:
 			get_animation()
@@ -104,5 +107,8 @@ if __name__ == '__main__':
 	# Start everything
 	server_callback = False
 	wifi_init()
+
+	# Start the two main function in the two different cores
 	slave_client()
-	slave_server()
+	
+	server_thread = _thread.start_new_thread( slave_server, () )
