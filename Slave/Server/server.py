@@ -17,7 +17,7 @@ def start_server():
 	socket_descriptor.bind( ( wlan.ifconfig()[0], generals["server_port"] ) ) # Replace ip with wlan ip
 
 	# Start to listen on the connection
-	socket_descriptor.listen()
+	socket_descriptor.listen( 2 )
 
 	# Accept connection untill the server doesn't ask to turn off
 	while ( server_callback != 3 ):
@@ -27,11 +27,10 @@ def start_server():
 		# Check if connected
 		with connection:
 			# Recive the connection
-			buffer = socket_descriptor.recv( 1024 )
-
-			server_callback = 2
+			buffer = connection.recv( 1024 )
 
 			# Send a ok response
 			connection.send( "HTTP/1.0 200 OK\r\n".encode() )
+			connection.close()
 	# Exit
 	return

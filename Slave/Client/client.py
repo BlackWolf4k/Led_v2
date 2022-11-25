@@ -62,18 +62,15 @@ def recive_animation( socket_descriptor, animation_descriptor ):
 	# Create the animation dictionary
 	animation = {}
 
-	# I just don't know why
-	socket_descriptor.recv( 32 )
-
 	# Start reciving line by line
 	for i in range( 0, animation_descriptor.number_of_lines, 1 ):
 		animation[i] = b''
 
 		# How many bytes where recived
-		recived  = 0
+		recived = 0
 
 		# Recive the whole line
-		while ( recived < animation_descriptor.number_of_lines ):
+		while ( recived < animation_descriptor.line_length ):
 			# Recive piece of animation
 			buffer = socket_descriptor.recv( animation_descriptor.line_length + 1 )
 
@@ -82,13 +79,6 @@ def recive_animation( socket_descriptor, animation_descriptor ):
 
 			# Append the animation piece
 			animation[i] += buffer
-
-		# Check that the reciving was sucessfull
-		# if ( buffer.len <= animation_descriptor.line_length ): # or buffer.len > animation_descriptor.line_length ):
-		# 	return None # There was and error while reciving, return None
-
-		# Check if recived the whole animation line
-		# if ( buffer.len < animation_descriptor.line_length )
 
 	# Everything was fine, return the animation
 	return animation

@@ -118,6 +118,8 @@ void* handle_slave( void* socket_descriptor )
 	// Get the slave descriptor
 	slave_t slave = get_slave( slave_connection.id );
 
+	strcpy( slave.ip_address, slave_connection.ip_address );
+
 	// Check that the slave research was sucessfull
 	if ( slave.id == 0 )
 	{
@@ -163,7 +165,7 @@ void* handle_slave( void* socket_descriptor )
 	if ( !update_slave( slave ) )
 	{
 		// There was an error while updating the slaves informations
-		printf( "There was and error updating the slaves informations\n" )
+		printf( "There was and error updating the slaves informations\n" );
 		exit( 1 );
 	}
 
@@ -348,7 +350,7 @@ char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number 
 			if ( animations - 1 < animation_number )
 			{
 				// Set the animation to search to the first one ( number 0 )
-				animation_number = 0
+				animation_number = 0;
 				/*
 				// Close the file
 				fclose( file );
