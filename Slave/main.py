@@ -114,6 +114,6 @@ if __name__ == '__main__':
 	wifi_init()
 
 	# Start the two main function in the two different cores
-	server_thread = _thread.start_new_thread( slave_server, () )
+	client_thread = _thread.start_new_thread( slave_client, () )
 
-	slave_client()
+	slave_server()

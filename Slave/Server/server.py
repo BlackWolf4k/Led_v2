@@ -13,24 +13,40 @@ def start_server():
 	# Createthe socket descriptor
 	socket_descriptor = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 
+	# Override the address beeing used
+	socket_descriptor.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
+
 	# Bind the connection
-	socket_descriptor.bind( ( wlan.ifconfig()[0], generals["server_port"] ) ) # Replace ip with wlan ip
+	socket_descriptor.bind( ( "0.0.0.0", generals["server_port"] ) ) # Replace ip with wlan ip
 
 	# Start to listen on the connection
 	socket_descriptor.listen( 2 )
 
+	print( "Started Server" )
+
 	# Accept connection untill the server doesn't ask to turn off
 	while ( server_callback != 3 ):
+		print( "Started to accept connections" )
+
 		# Accept the connection
 		connection, address = socket_descriptor.accept()
 
-		# Check if connected
-		with connection:
-			# Recive the connection
-			buffer = connection.recv( 1024 )
+		print( "Connected to:" + str( address ) )
 
-			# Send a ok response
-			connection.send( "HTTP/1.0 200 OK\r\n".encode() )
-			connection.close()
+		# Recive the connection
+		request = connection.recv( 1024 )
+
+		# Check what has bee asked
+		if ( generals["slave_password"] in request.decode() ):
+			server_callback = 3
+		elif ( "new" in request.decode() ):
+			server_callback = 2
+
+		# Send a ok response
+		connection.send( "HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n" )
+		connection.send( "<!DOCTYPE html><html>OK</html>" )
+		connection.close()
+
 	# Exit
+	print("Server stopped")
 	return
