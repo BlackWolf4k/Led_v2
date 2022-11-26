@@ -1,6 +1,7 @@
 # Value set by main server
-# 0: go ,1: get new animation, 2: turn off untill other request, 3 shut down
-server_callback = 0
+# Is array to be shared as ref to threads
+# 0: go, 1: get new animation, 2: turn off untill other request, 3 shut down
+server_callback = []
 
 # General purpose infromations
 generals = {

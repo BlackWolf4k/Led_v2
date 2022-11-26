@@ -25,7 +25,7 @@ def start_server():
 	print( "Started Server" )
 
 	# Accept connection untill the server doesn't ask to turn off
-	while ( server_callback != 3 ):
+	while ( server_callback[0] != 3 ):
 		print( "Started to accept connections" )
 
 		# Accept the connection
@@ -36,17 +36,25 @@ def start_server():
 		# Recive the connection
 		request = connection.recv( 1024 )
 
+		response = ""
+
 		# Check what has bee asked
 		if ( generals["slave_password"] in request.decode() ):
-			server_callback = 3
-		elif ( "new" in request.decode() ):
-			server_callback = 2
+			response = "Shutting down slave"
+			server_callback[0] = 3
+		elif ( "freeze" in request.decode() ):
+			if ( server_callback[0] == 2 ):
+				response = "UnFrozen"
+				server_callback[0] = 0
+			elif ( server_callback[0] != 3 ):
+				response = "Frozen"
+				server_callback[0] = 2
 
 		# Send a ok response
 		connection.send( "HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n" )
-		connection.send( "<!DOCTYPE html><html>OK</html>" )
+		connection.send( "<!DOCTYPE html><html>" + response + "</html>" )
 		connection.close()
 
 	# Exit
-	print("Server stopped")
+	print( "Shutting down slave client" )
 	return

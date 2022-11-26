@@ -21,7 +21,12 @@ import _thread
 # 5. If a force quit message is sent, the slave repeats from 1
 # 5. If the animation has ended the slave repeats from 1
 
+# Set the wlan as static
 wlan = network.WLAN( network.STA_IF )
+
+# Initialize the server_callback
+# 0 for go on
+server_callback.append( 0 )
 
 def wifi_init():
 	global wlan
@@ -41,8 +46,6 @@ def restart_wifi():
 	wlan.connect( generals["ssid"], generals["password"] )
 
 def get_animation():
-	global server_callback
-
 	# Create the socket
 	socket_descriptor = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 
@@ -85,11 +88,10 @@ def slave_client():
 	global server_callback
 
 	# Repeat untill the main server doesn't tell to turn off
-	while ( server_callback != 3 and server_callback != 2 ):
-		# Sleep different times bases on server commands
-		if ( server_callback == 3 ):
-			time.sleep( 16 )
-		elif ( server_callback == 2 ):
+	while ( server_callback[0] != 3 ):
+		# If server_callback is 2 just sleep
+		if ( server_callback[0] == 2 ):
+			print( "Frozen" )
 			time.sleep( 1 )
 
 		# Try to connect to the main server
@@ -101,16 +103,17 @@ def slave_client():
 			# Wait some time before making another request
 			time.sleep( 5 )
 
+	print( "Shutting down slave client")
+	return
+
 def slave_server():
 	start_server()
 	return
 
 # Main
 if __name__ == '__main__':
-	global server_callback
-
 	# Start everything
-	server_callback = False
+	server_callback[0] = 0
 	wifi_init()
 
 	# Start the two main function in the two different cores
