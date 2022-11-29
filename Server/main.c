@@ -10,6 +10,8 @@
 #include "./Server/server.h"
 // For slaves handling
 #include "./Slave/slave.h"
+// For clients handling
+#include "./Client/client.h"
 
 #define MAX_NUMBER_OF_SLAVES 8
 #define MAX_NUMBER_OF_CLIENTS 8
@@ -143,4 +145,49 @@ void slave_server()
 }
 
 void client_server()
-{}
+{
+		int32_t socket_descriptor = 0;
+
+	pthread_t thread = 0;
+
+	uint8_t status_code = 0;
+
+	printf( "Creating Socket for Client\n" );
+
+	// Create the socket
+	socket_descriptor = create_socket();
+
+	// Check that the creation of the socket was sucessfull
+	if ( socket_descriptor == -1 )
+		connection_error();
+	
+	printf( "Binding Connection for Clients\n" );
+
+	status_code = bind_connection( &socket_descriptor, "192.136.60.133", 1235 ); // change
+
+	// Check that the binding was sucessfull
+	if ( !status_code )
+		connection_error();
+	
+	printf( "Starting to listen for Clients\n" );
+	
+	status_code = listen_connection( &socket_descriptor, MAX_NUMBER_OF_CLIENTS );
+	
+	// Check that the start of listening was sucessfull
+	if ( !status_code )
+		connection_error();
+	
+	printf( "Starting to accept connections from Clients\n" );
+	
+	// Accept connection in loop of clients
+	while ( 1 )
+	{
+		thread = accept_connection( &socket_descriptor, handle_client );
+
+		// Check that the was sucessfull
+		if ( !status_code )
+			connection_error();
+	}
+
+	return;
+}

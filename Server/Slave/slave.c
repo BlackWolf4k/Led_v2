@@ -4,7 +4,7 @@
 #define ANIMATION_NAME_LENGTH 20
 
 // Create a mutex to lock when file positioning is needed
-pthread_mutex_t mutex;
+pthread_mutex_t mutex_slave;
 
 /*
 SLAVE CONNECTION DESCRIPTOR
@@ -205,7 +205,7 @@ slave_t get_slave( uint32_t slave_id )
 
 	/* Start of possible collision zone */
 	// Lock
-	pthread_mutex_lock( &mutex );
+	pthread_mutex_lock( &mutex_slave );
 
 	// Read each element in the file untill slave with corresponding id is found
 	while ( fread( &slave, sizeof( slave_t ), 1, file ) != 0 )
@@ -214,7 +214,7 @@ slave_t get_slave( uint32_t slave_id )
 		if ( slave.id == slave_id )
 		{
 			// Unlock
-			pthread_mutex_unlock( &mutex );
+			pthread_mutex_unlock( &mutex_slave );
 
 			// Close the file
 			fclose( file );
@@ -224,7 +224,7 @@ slave_t get_slave( uint32_t slave_id )
 	}
 
 	// Unlock
-	pthread_mutex_unlock( &mutex );
+	pthread_mutex_unlock( &mutex_slave );
 	/* End of possible collision zone */
 
 	// Close the file
@@ -252,7 +252,7 @@ uint8_t update_slave( slave_t updated_slave )
 
 	/* Start of possible collision zone */
 	// Lock
-	pthread_mutex_lock( &mutex );
+	pthread_mutex_lock( &mutex_slave );
 
 	// Read each element in the file untill slave with corresponding id is found
 	while ( fread( &slave, sizeof( slave_t ), 1, file ) != 0 )
@@ -268,7 +268,7 @@ uint8_t update_slave( slave_t updated_slave )
 				printf( "Something went wrong while updating the slaves informations\n" );
 
 			// Unlock
-			pthread_mutex_unlock( &mutex );
+			pthread_mutex_unlock( &mutex_slave );
 
 			// Close the file
 			fclose( file );
@@ -278,7 +278,7 @@ uint8_t update_slave( slave_t updated_slave )
 	}
 
 	// Unlock
-	pthread_mutex_unlock( &mutex );
+	pthread_mutex_unlock( &mutex_slave );
 	/* End of possible collision zone */
 
 	// Close the file
@@ -314,7 +314,7 @@ char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number 
 
 	/* Start of possible collision zone */
 	// Lock
-	pthread_mutex_lock( &mutex );
+	pthread_mutex_lock( &mutex_slave );
 
 	// Store the file name to return
 	char* file_name = NULL;
@@ -376,7 +376,7 @@ char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number 
 	}
 
 	// Unlock
-	pthread_mutex_unlock( &mutex );
+	pthread_mutex_unlock( &mutex_slave );
 	/* End of possible collision zone */
 
 	// Free the buffer

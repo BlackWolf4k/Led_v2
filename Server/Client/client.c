@@ -10,7 +10,7 @@ const char* client_requests[CLIENT_REQUESTS] = { "get_slaves", // asking for the
 								   };
 
 // Create a mutex to lock when file positioning is needed
-pthread_mutex_t mutex;
+pthread_mutex_t mutex_client;
 
 /*
 SLAVES DESCRIPTOR:
@@ -101,7 +101,7 @@ void* handle_client( void* socket_descriptor )
 	// Decide what to do
 	for ( uint32_t i = 0; i < CLIENT_REQUESTS; i++ )
 		if ( strstr( buffer, client_requests[i] ) != NULL )
-			if ( !( *( handling_functions[i] )( *( int32_t* )socket_descriptor ) ) )
+			if ( !( ( handling_functions[i] )( *( int32_t* )socket_descriptor ) ) )
 				exit( 2 );
 }
 
@@ -126,7 +126,7 @@ uint8_t send_slaves( int32_t socket_descriptor )
 
 	/* Start of possible collision zone */
 	// Lock
-	pthread_mutex_lock( &mutex );
+	pthread_mutex_lock( &mutex_client );
 
 	// Read each element in the file untill slave with corresponding id is found
 	while ( fread( buffer + i, sizeof( slave_t ), 1, file ) != 0 )
@@ -141,18 +141,18 @@ uint8_t send_slaves( int32_t socket_descriptor )
 			if ( send( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t ), 0 ) <= 0 )
 			{
 				// There was an error while sending
-				perror( ["Sending Error"] );
+				perror( "[Sending Error]" );
 				return 0;
 			}
 
 			// Clear the buffer
-			bzero( buffer, BUFFER_SIZE * sizeof( slave_t ) );
+			bzero( buffer, BUFFER_SIZE * sizeof( uint8_t ) );
 			i = 0;
 		}
 	}
 
 	// Unlock
-	pthread_mutex_unlock( &mutex );
+	pthread_mutex_unlock( &mutex_client );
 	/* End of possible collision zone */
 
 	// Free the buffer
@@ -165,7 +165,89 @@ uint8_t send_slaves( int32_t socket_descriptor )
 }
 
 uint8_t send_animations_names( int32_t socket_descriptor )
-{}
+{	
+	// Create a buffer to store data
+	uint8_t* buffer_base = NULL;
+	uint8_t* buffer = buffer_base = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
+
+	// Check that the memory allocation was sucessfull
+	if ( buffer_base == NULL )
+	{
+		perror( "[Memory Error]" );
+		return '\0';
+	}
+
+	// Recive the slave
+	if ( recv( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t ), 0 ) )
+	{
+		perror( "[Reciving Error]" );
+
+		// Free the buffer
+		free( buffer );
+
+		return 0;
+	}
+
+	// Get the slave
+	slave_t slave = *( ( slave_t* )( buffer ) );
+
+	// Clear the buffer
+	bzero( buffer, sizeof( slave_t) + 1 );
+
+	// Open the file
+	FILE* file = NULL;
+	file = fopen( "animations_list.dat", "r" );
+
+	// Check that the file opening was sucessfull
+	if ( file == NULL )
+	{
+		perror( "[File Error]" );
+		return '\0'; // Return empty string
+	}
+
+	uint8_t found = 0;
+
+	/* Send the animations names */
+	/* Start of possible collision zone */
+	// Lock
+	pthread_mutex_lock( &mutex_client );
+
+	// Read each line of the file untill the slave id is found
+	while ( fgets( buffer, BUFFER_SIZE, file ) && !found )
+	{
+		if ( slave.animation_list == buffer[0] )
+		{
+			if ( send( socket_descriptor, buffer + 1, BUFFER_SIZE * sizeof( uint8_t ), 0 ) <= 0 )
+			{
+				perror( "[Sending Error]" );
+
+				// Free the buffer
+				free( buffer );
+
+				//Close the file
+				fclose( file );
+
+				// Unlock
+				pthread_mutex_unlock( &mutex_client );
+
+				return 0;
+			}
+			found = 1;
+		}
+	}
+
+	// Unlock
+	pthread_mutex_unlock( &mutex_client );
+	/* End of possible collision zone */
+
+	// Close the file
+	fclose( file );
+
+	// Free the buffer
+	free( buffer );
+
+	return 1;
+}
 
 uint8_t send_animation( int32_t socket_descriptor )
 {
@@ -189,7 +271,7 @@ uint8_t send_animation( int32_t socket_descriptor )
 		free( buffer );
 
 		// There was an error
-		perror( ["Reciving Error"] );
+		perror( "[Reciving Error]" );
 		return 0;
 	}
 
@@ -205,7 +287,7 @@ uint8_t send_animation( int32_t socket_descriptor )
 	{
 		// Send a error message
 		// Check that the sending was sucessfull
-		if ( send( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t ) ) <= 0 )
+		if ( send( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t ), 0 ) <= 0 )
 		{
 			// Close the file
 			fclose( file );
@@ -214,7 +296,7 @@ uint8_t send_animation( int32_t socket_descriptor )
 			free( buffer );
 
 			// There was an error
-			perror( ["Sending Error"] );
+			perror( "[Sending Error]" );
 			return 0;
 		}
 	}
@@ -222,7 +304,7 @@ uint8_t send_animation( int32_t socket_descriptor )
 	/* Send the animation */
 	/* Start of possible collision zone */
 	// Lock
-	pthread_mutex_lock( &mutex );
+	pthread_mutex_lock( &mutex_client );
 
 	// Read the animation file descriptor
 	// Check that the reading was sucessfull
@@ -236,7 +318,7 @@ uint8_t send_animation( int32_t socket_descriptor )
 		free( buffer );
 
 		// Unclock
-		pthread_mutex_unlock( &mutex );
+		pthread_mutex_unlock( &mutex_client );
 
 		return 0;
 	}
@@ -253,9 +335,9 @@ uint8_t send_animation( int32_t socket_descriptor )
 		free( buffer );
 
 		// Unclock
-		pthread_mutex_unlock( &mutex );
+		pthread_mutex_unlock( &mutex_client );
 
-		perror( ["Sending Error"] );
+		perror( "[Sending Error]" );
 		return 0;
 	}
 
@@ -277,7 +359,7 @@ uint8_t send_animation( int32_t socket_descriptor )
 			free( buffer );
 
 			// Unclock
-			pthread_mutex_unlock( &mutex );
+			pthread_mutex_unlock( &mutex_client );
 
 			return 0;
 		}
@@ -294,9 +376,9 @@ uint8_t send_animation( int32_t socket_descriptor )
 			free( buffer );
 
 			// Unclock
-			pthread_mutex_unlock( &mutex );
+			pthread_mutex_unlock( &mutex_client );
 
-			perror( ["Sending Error"] );
+			perror( "[Sending Error]" );
 			return 0;
 		}
 
@@ -305,7 +387,7 @@ uint8_t send_animation( int32_t socket_descriptor )
 	}
 	
 	// Unlock
-	pthread_mutex_unlock( &mutex );
+	pthread_mutex_unlock( &mutex_client );
 	/* End of possible collision zone */
 
 	// Close the buffer
