@@ -103,10 +103,15 @@ void* handle_client( void* socket_descriptor )
 		if ( strstr( buffer, client_requests[i] ) != NULL )
 			if ( !( ( handling_functions[i] )( *( int32_t* )socket_descriptor ) ) )
 				exit( 2 );
+	
+	// Close the socket
+	close( *( int32_t* )socket_descriptor );
 }
 
 uint8_t send_slaves( int32_t socket_descriptor )
 {
+	printf( "Sending slaves to the client\n" );
+
 	// Open the file
 	FILE* file = NULL;
 	file = fopen( "slaves.dat", "r+" );
@@ -161,11 +166,15 @@ uint8_t send_slaves( int32_t socket_descriptor )
 	// Close the file
 	fclose ( file );
 
+	printf( "Slaves Sended\n" );
+
 	return 1;
 }
 
 uint8_t send_animations_names( int32_t socket_descriptor )
 {	
+	printf( "Sending animation playlist to the Client" );
+
 	// Create a buffer to store data
 	uint8_t* buffer_base = NULL;
 	uint8_t* buffer = buffer_base = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
@@ -174,7 +183,7 @@ uint8_t send_animations_names( int32_t socket_descriptor )
 	if ( buffer_base == NULL )
 	{
 		perror( "[Memory Error]" );
-		return '\0';
+		return 0;
 	}
 
 	// Recive the slave
@@ -202,7 +211,7 @@ uint8_t send_animations_names( int32_t socket_descriptor )
 	if ( file == NULL )
 	{
 		perror( "[File Error]" );
-		return '\0'; // Return empty string
+		return 0; // Return empty string
 	}
 
 	uint8_t found = 0;
@@ -246,11 +255,14 @@ uint8_t send_animations_names( int32_t socket_descriptor )
 	// Free the buffer
 	free( buffer );
 
+	printf( "Animation list sended\n" );
+
 	return 1;
 }
 
 uint8_t send_animation( int32_t socket_descriptor )
 {
+	printf( "Sending animation to Client\n" );
 	// Create a buffer to store informations
 	char* buffer = NULL;
 	buffer = calloc( BUFFER_SIZE, sizeof( uint8_t ) );
@@ -396,12 +408,16 @@ uint8_t send_animation( int32_t socket_descriptor )
 	// Close the file
 	fclose( file );
 
+	printf( "Animation Sended\n" );
+
 	// Everything was fine
 	return 1;
 }
 
 uint8_t download_animation( int32_t socket_descriptor )
 {
+	printf( "Downloading an animation\n" );
 	// Recive the name
 	// Recive the animation
+	printf( "Animation downloaded\n" );
 }
