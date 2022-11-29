@@ -87,7 +87,7 @@ void deamon( int32_t* server_pids )
 		// Check wich process returned
 		if ( exit_code == 1 ) // Slave server returned
 			server_pids[0] = start_subprocess( slave_server ); // Run it back and store the pid
-		else if ( exit_code == 1 ) // Client server returned
+		else if ( exit_code == 2 ) // Client server returned
 			server_pids[1] = start_subprocess( client_server ); // Run it back and store the pid
 	}
 

@@ -8,8 +8,8 @@
 #include <unistd.h>
 
 // Function called by the server
-// Return a status code for success or faiuler
-// Requires the slaved id ( sent on connection by the slave ) as parameter
+// Requires the socket descriptor of the connection with the slave
+// Return nothing
 void* handle_slave( void* socket_descriptor );
 
 // Function ordered by a client
