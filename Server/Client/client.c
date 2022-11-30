@@ -104,6 +104,8 @@ void* handle_client( void* socket_descriptor )
 			if ( !( ( handling_functions[i] )( *( int32_t* )socket_descriptor ) ) )
 				exit( 2 );
 	
+	printf( "Closing Connection\n" );
+
 	// Close the socket
 	close( *( int32_t* )socket_descriptor );
 }
@@ -136,14 +138,15 @@ uint8_t send_slaves( int32_t socket_descriptor )
 	// Read each element in the file untill slave with corresponding id is found
 	while ( fread( buffer + i, sizeof( slave_t ), 1, file ) != 0 )
 	{
+		printf( "Slave: %hhu\n", ( ( slave_t* )( buffer + i ) ) -> id );
 		i += sizeof( slave_t );
 
 		// Check that there is enought space in the buffer
 		if ( i + sizeof( slave_t ) > BUFFER_SIZE )
 		{
-			// Send the buffer
-			// Check that the senging was sucessfull
-			if ( send( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t ), 0 ) <= 0 )
+			// Send the slave
+			// Check that the sending was sucessfull
+			if ( send( socket_descriptor, buffer, BUFFER_SIZE, 0 ) <= 0 )
 			{
 				// There was an error while sending
 				perror( "[Sending Error]" );
@@ -154,6 +157,15 @@ uint8_t send_slaves( int32_t socket_descriptor )
 			bzero( buffer, BUFFER_SIZE * sizeof( uint8_t ) );
 			i = 0;
 		}
+	}
+
+	// Send the slaves
+	// Check that the sending was sucessfull
+	if ( send( socket_descriptor, buffer, BUFFER_SIZE, 0 ) <= 0 )
+	{
+		// There was an error while sending
+		perror( "[Sending Error]" );
+		return 0;
 	}
 
 	// Unlock
