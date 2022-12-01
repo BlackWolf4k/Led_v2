@@ -326,10 +326,10 @@ uint8_t send_animation( int32_t socket_descriptor )
 		return 0;
 	}
 
-	send_file( buffer, socket_descriptor );
+	// send_file( buffer, socket_descriptor );
 
 	// Open the file
-	/* FILE* file = NULL;
+	FILE* file = NULL;
 	file = fopen( buffer, "r" );
 
 	// Clear the buffer
@@ -352,11 +352,11 @@ uint8_t send_animation( int32_t socket_descriptor )
 			perror( "[Sending Error]" );
 			return 0;
 		}
-	}*/
+	}
 
 	/* Send the animation */
 	/* Start of possible collision zone */
-/*	// Lock
+	// Lock
 	pthread_mutex_lock( &mutex_client );
 
 	// Read the animation file descriptor
@@ -440,14 +440,14 @@ uint8_t send_animation( int32_t socket_descriptor )
 	}
 	
 	// Unlock
-	pthread_mutex_unlock( &mutex_client );*/
+	pthread_mutex_unlock( &mutex_client );
 	/* End of possible collision zone */
-/*
+
 	// Close the buffer
 	free( buffer );
 
 	// Close the file
-	fclose( file );*/
+	fclose( file );
 
 	printf( "Animation Sended\n" );
 
