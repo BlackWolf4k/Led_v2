@@ -425,7 +425,6 @@ uint8_t send_file( const char* animation_file, int32_t slave_socket )
 	
 	// Send the animation file descriptor
 	bytes_sent = send( slave_socket, buffer, BUFFER_SIZE, 0 );
-	perror( "[Socket Error]" );
 
 	if ( bytes_sent <= 0 )
 		return 1;

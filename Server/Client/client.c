@@ -76,6 +76,12 @@ uint8_t send_animation( int32_t socket_descriptor );
 // Returns a success or failure status ( 0: failure, 1: success )
 uint8_t download_animation( int32_t socket_descriptor );
 
+// Include function from "slave.c"
+extern slave_t get_slave( uint32_t slave_id );
+
+// Include function from "slave.c"
+extern uint8_t send_file( const char* animation_file, int32_t slave_socket );
+
 uint8_t ( *handling_functions[CLIENT_REQUESTS] )( int32_t ) = { send_slaves,
 															 send_animations_names,
 															 send_animation,
@@ -98,11 +104,17 @@ void* handle_client( void* socket_descriptor )
 		exit( 2 );
 	}
 
+	uint8_t go = 1;
+
 	// Decide what to do
-	for ( uint32_t i = 0; i < CLIENT_REQUESTS; i++ )
+	for ( uint32_t i = 0; i < CLIENT_REQUESTS && go; i++ )
 		if ( strstr( buffer, client_requests[i] ) != NULL )
+		{
 			if ( !( ( handling_functions[i] )( *( int32_t* )socket_descriptor ) ) )
 				exit( 2 );
+			else
+				go = 0;
+		}
 	
 	printf( "Closing Connection\n" );
 
@@ -185,7 +197,7 @@ uint8_t send_slaves( int32_t socket_descriptor )
 
 uint8_t send_animations_names( int32_t socket_descriptor )
 {	
-	printf( "Sending animation playlist to the Client" );
+	printf( "Sending animation playlist to the Client\n" );
 
 	// Create a buffer to store data
 	uint8_t* buffer_base = NULL;
@@ -199,7 +211,7 @@ uint8_t send_animations_names( int32_t socket_descriptor )
 	}
 
 	// Recive the slave
-	if ( recv( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t ), 0 ) )
+	if ( recv( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t ), 0 ) <= 0 )
 	{
 		perror( "[Reciving Error]" );
 
@@ -210,10 +222,25 @@ uint8_t send_animations_names( int32_t socket_descriptor )
 	}
 
 	// Get the slave
-	slave_t slave = *( ( slave_t* )( buffer ) );
+	slave_t slave = get_slave( buffer[0] );
+
+	if ( slave.id == 0 )
+	{
+		printf( "Wrong slave id: %hhu\n", slave.id );
+
+		// Send empty packet
+		send( socket_descriptor, buffer + 1, 1, 0 );
+
+		// Free the buffer
+		free( buffer );
+
+		return 0;
+	}
+
+	printf( "Recived slave id: %hhu\n", slave.id );
 
 	// Clear the buffer
-	bzero( buffer, sizeof( slave_t) + 1 );
+	bzero( buffer, sizeof( slave_t ) + 1 );
 
 	// Open the file
 	FILE* file = NULL;
@@ -238,7 +265,7 @@ uint8_t send_animations_names( int32_t socket_descriptor )
 	{
 		if ( slave.animation_list == buffer[0] )
 		{
-			if ( send( socket_descriptor, buffer + 1, BUFFER_SIZE * sizeof( uint8_t ), 0 ) <= 0 )
+			if ( send( socket_descriptor, buffer + 2, BUFFER_SIZE * sizeof( uint8_t ), 0 ) <= 0 )
 			{
 				perror( "[Sending Error]" );
 
@@ -289,7 +316,7 @@ uint8_t send_animation( int32_t socket_descriptor )
 
 	// Recive wich animation to send
 	// Check that the reciving was sucessfull
-	if ( recv( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t), 0 ) <= 0 )
+	if ( recv( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t ), 0 ) <= 0 )
 	{
 		// Free the buffer
 		free( buffer );
@@ -299,8 +326,10 @@ uint8_t send_animation( int32_t socket_descriptor )
 		return 0;
 	}
 
+	send_file( buffer, socket_descriptor );
+
 	// Open the file
-	FILE* file = NULL;
+	/* FILE* file = NULL;
 	file = fopen( buffer, "r" );
 
 	// Clear the buffer
@@ -323,11 +352,11 @@ uint8_t send_animation( int32_t socket_descriptor )
 			perror( "[Sending Error]" );
 			return 0;
 		}
-	}
+	}*/
 
 	/* Send the animation */
 	/* Start of possible collision zone */
-	// Lock
+/*	// Lock
 	pthread_mutex_lock( &mutex_client );
 
 	// Read the animation file descriptor
@@ -411,14 +440,14 @@ uint8_t send_animation( int32_t socket_descriptor )
 	}
 	
 	// Unlock
-	pthread_mutex_unlock( &mutex_client );
+	pthread_mutex_unlock( &mutex_client );*/
 	/* End of possible collision zone */
-
+/*
 	// Close the buffer
 	free( buffer );
 
 	// Close the file
-	fclose( file );
+	fclose( file );*/
 
 	printf( "Animation Sended\n" );
 

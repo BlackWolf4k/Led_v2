@@ -49,8 +49,8 @@ int main()
 	// [0] = slave server, [1] = client server
 	int32_t server_pids[NUMBER_OF_SERVERS];
 
-	printf( "Starting slave server\n" );
-	server_pids[0] = start_subprocess( slave_server );
+	// printf( "Starting slave server\n" );
+	// server_pids[0] = start_subprocess( slave_server );
 
 	printf( "Starting client server\n" );
 	server_pids[1] = start_subprocess( client_server );
@@ -78,7 +78,7 @@ int32_t start_subprocess( void ( *handler )() )
 void deamon( int32_t* server_pids )
 {
 	// Process exit code
-	int32_t exit_code = 0;
+	uint32_t exit_code = 0;
 
 	// Wait any process forever
 	while ( 1 )
@@ -86,10 +86,12 @@ void deamon( int32_t* server_pids )
 		// Wait a child process
 		waitpid( -1, &exit_code, 0 );
 
+		printf( "One server collapsed with exit code: %d\n", exit_code % 255 );
+
 		// Check wich process returned
-		if ( exit_code == 1 ) // Slave server returned
+		if ( exit_code % 255 == 1 ) // Slave server returned
 			server_pids[0] = start_subprocess( slave_server ); // Run it back and store the pid
-		else if ( exit_code == 2 ) // Client server returned
+		else if ( exit_code % 255 == 2 ) // Client server returned
 			server_pids[1] = start_subprocess( client_server ); // Run it back and store the pid
 	}
 
