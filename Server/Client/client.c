@@ -80,7 +80,7 @@ uint8_t download_animation( int32_t socket_descriptor );
 extern slave_t get_slave( uint32_t slave_id );
 
 // Include function from "slave.c"
-extern uint8_t send_file( const char* animation_file, int32_t slave_socket );
+extern uint8_t update_slave( slave_t updated_slave );
 
 uint8_t ( *handling_functions[CLIENT_REQUESTS] )( int32_t ) = { send_slaves,
 															 send_animations_names,
@@ -471,7 +471,7 @@ uint8_t download_animation( int32_t socket_descriptor )
 		return 0;
 	}
 
-	// Recive the filename
+	// Recive the filename, the animation file descriptor and other two bytes: 0 = slave id, 1 = force next play
 	// Check that the reciving was sucessfull
 	if ( recv( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t ), 0 ) <= 0 )
 	{
@@ -479,19 +479,26 @@ uint8_t download_animation( int32_t socket_descriptor )
 		free( buffer );
 
 		// There was an error
-		perror( "[Reciving Error]" );
+		perror( "[Reciving Error 0]" );
 		return 0;
 	}
+
+	printf( "Filename: %s\n", buffer );
+	for ( int i = 0; i < BUFFER_SIZE; i++ )
+		printf( "%hhu-", buffer[i]);
+	
+	// Get the end of the filename
+	int32_t file_name_end = 0;
+	for ( int32_t i = 0; i < BUFFER_SIZE; i++ )
+		if ( buffer[i] == '\0' )
+			file_name_end = i;
 
 	// Open the file
 	FILE* file = NULL;
 	file = fopen( buffer, "r" );
 
-	// Clear the buffer
-	bzero( buffer, BUFFER_SIZE * sizeof( uint8_t ) );
-
 	// Check that the file opening was sucessfull
-	if ( file == NULL )
+	/*if ( file == NULL )
 	{
 		// Send a error message
 		// Check that the sending was sucessfull
@@ -507,26 +514,11 @@ uint8_t download_animation( int32_t socket_descriptor )
 			perror( "[Sending Error]" );
 			return 0;
 		}
-	}
-
-	// Recive the animation file descriptor
-	// Check that the reciving was sucessfull
-	if ( recv( socket_descriptor, buffer, 1 * sizeof( animation_file_descriptor_t ), 0 ) <= 0 )
-	{
-		// Free the buffer
-		free( buffer );
-
-		// Close the file
-		fclose( file );
-
-		// There was an error
-		perror( "[Reciving Error]" );
-		return 0;
-	}
+	}*/
 
 	// Write the descriptor
 	// Check that the writing was sucessfull
-	if ( !fwrite( buffer, sizeof( animation_file_descriptor_t ), 1, file ) )
+	if ( !fwrite( buffer + file_name_end + 1, sizeof( animation_file_descriptor_t ), 1, file ) )
 	{
 		perror( "[Writing Error]" );
 
@@ -539,15 +531,20 @@ uint8_t download_animation( int32_t socket_descriptor )
 		return 0;
 	}
 
+	printf("aaaa");
+
 	// Store the animation file descriptor
-	animation_file_descriptor_t descriptor = *( animation_file_descriptor_t* )buffer;
+	animation_file_descriptor_t descriptor = *( animation_file_descriptor_t* )( buffer + file_name_end + 1 );
+
+	printf( "Line: %u\n", descriptor.line_length );
+	printf( "Delay: %hhu\n", descriptor.delay );
 
 	// Clear the buffer
 	bzero( buffer, BUFFER_SIZE * sizeof( uint8_t ) );
 
 	// Write the animation body
 	// Keep on going untill stops reciving
-	while ( recv( socket_descriptor, buffer, BUFFER_SIZE, 0 ) > 0 )
+	while ( recv( socket_descriptor, buffer, descriptor.line_length * sizeof( uint8_t ), 0 ) > 0 )
 	{
 		// Write each piece
 		// Check that the writing was sucessfull
