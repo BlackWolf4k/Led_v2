@@ -76,6 +76,11 @@ uint8_t send_animation( int32_t socket_descriptor );
 // Returns a success or failure status ( 0: failure, 1: success )
 uint8_t download_animation( int32_t socket_descriptor );
 
+// Add a animation to the animations file
+// Requires as argument the filename and the animation list id
+// Returns as argument the number of the animation added
+uint8_t add_animation( char* filename, int32_t animation_list );
+
 // Include function from "slave.c"
 extern slave_t get_slave( uint32_t slave_id );
 
@@ -461,10 +466,12 @@ uint8_t download_animation( int32_t socket_descriptor )
 
 	// Allocate a buffer
 	uint8_t* buffer = NULL;
+	uint8_t* filename = NULL;
 	buffer = ( uint8_t* )calloc( BUFFER_SIZE, sizeof( uint8_t ) );
+	filename = ( uint8_t* )calloc( 20, sizeof( uint8_t ) );
 
 	// Check that the memory allocation was sucessfull
-	if ( buffer == NULL )
+	if ( buffer == NULL || filename == NULL )
 	{
 		// There was an error
 		perror( "[Memory Allocation]" );
@@ -492,29 +499,27 @@ uint8_t download_animation( int32_t socket_descriptor )
 	for ( int32_t i = 0; i < BUFFER_SIZE; i++ )
 		if ( buffer[i] == '\0' )
 			file_name_end = i;
+	
+	// Save the filename
+	strcpy( filename, buffer );
 
 	// Open the file
 	FILE* file = NULL;
-	file = fopen( buffer, "r" );
+	file = fopen( filename, "r" );
 
 	// Check that the file opening was sucessfull
-	/*if ( file == NULL )
+	if ( file == NULL )
 	{
-		// Send a error message
-		// Check that the sending was sucessfull
-		if ( send( socket_descriptor, buffer, BUFFER_SIZE * sizeof( uint8_t ), 0 ) <= 0 )
-		{
-			// Close the file
-			fclose( file );
+		// Close the file
+		fclose( file );
 
-			// Free the buffer
-			free( buffer );
+		// Free the buffer
+		free( buffer );
 
-			// There was an error
-			perror( "[Sending Error]" );
-			return 0;
-		}
-	}*/
+		// There was an error
+		perror( "[Sending Error]" );
+		return 0;
+	}
 
 	// Write the descriptor
 	// Check that the writing was sucessfull
@@ -531,10 +536,11 @@ uint8_t download_animation( int32_t socket_descriptor )
 		return 0;
 	}
 
-	printf("aaaa");
-
 	// Store the animation file descriptor
 	animation_file_descriptor_t descriptor = *( animation_file_descriptor_t* )( buffer + file_name_end + 1 );
+
+	uint8_t slave_id = *( buffer + ( file_name_end + sizeof( animation_file_descriptor_t ) ) );
+	uint8_t forced = *( buffer + ( file_name_end + sizeof( animation_file_descriptor_t ) + 1 ) );
 
 	printf( "Line: %u\n", descriptor.line_length );
 	printf( "Delay: %hhu\n", descriptor.delay );
@@ -565,6 +571,14 @@ uint8_t download_animation( int32_t socket_descriptor )
 		bzero( buffer, BUFFER_SIZE * sizeof( uint8_t ) );
 	}
 
+	// Update the slave
+	slave_t slave = get_slave( slave_id );
+
+	if ( forced )
+		slave.actual_animation = add_animation( filename, slave.animation_list );
+
+	update_slave( slave );
+
 	// Close the file
 	fclose( file );
 
@@ -572,4 +586,108 @@ uint8_t download_animation( int32_t socket_descriptor )
 	free( buffer );
 
 	printf( "Animation downloaded\n" );
+}
+
+uint8_t add_animation( char* filename, int32_t animation_list )
+{
+	// Open the animation file
+	FILE* file = NULL;
+	fopen( "./animations_list.dat", "r+" );
+
+	// Check that the file opening was sucessfull
+	if ( file == NULL )
+	{
+		// Close the file
+		fclose( file );
+
+		// There was an error
+		perror( "[Sending Error]" );
+		return 0;
+	}
+
+	// Get the size of the file
+	fseek( file, 0L, SEEK_END );
+	uint32_t size = ftell( file );
+
+	// Get to the beginning
+	fseek( file, 0L, SEEK_SET );
+
+	// Allocate a buffer of the length of the file
+	uint8_t* buffer = NULL;
+	buffer = ( uint8_t* )calloc( size, sizeof( uint8_t ) );
+
+	// Check that the allocation was sucessfull
+	if ( buffer == NULL )
+	{
+		// There was an error
+		perror( "[Memory Allocation]" );
+		return 0;
+	}
+
+	// Store the file in the buffer
+	if ( !fread( buffer, sizeof( uint8_t ), size, file ) )
+	{
+		// Close the file
+		fclose( file );
+
+		// Free the buffer
+		free( buffer );
+
+		// Print a error message
+		perror( "[Reading Error]" );
+		return 0;
+	}
+
+	// Get to the beginning
+	fseek( file, 0L, SEEK_SET );
+
+	uint8_t previous_character = '\n';
+	uint8_t character = '\0';
+	uint32_t number = 0;
+
+	// Get the animation playlist
+	// Read each line of the file untill the slave id is found
+	while ( fread( &character, sizeof( uint8_t ), 1, file ) )
+	{
+		if ( character == animation_list && previous_character == '\n' )
+		{
+			while ( fread( &character, sizeof( uint8_t ), 1, file ) )
+			{
+				if ( character == '\n' )
+				{
+					fseek( file, -1L, SEEK_CUR );
+					fwrite( filename, sizeof( uint8_t ), strlen( filename ), file );
+				}
+				else if ( character == ';' )
+					number += 1;
+			}
+
+			// Get current position
+			uint32_t position = fseek( file, 0L, SEEK_CUR );
+
+			if ( fwrite( buffer + position, sizeof( uint8_t ), size - position, file ) )
+			{
+				// Free the buffer
+				free( buffer );
+
+				// Close the file
+				fclose( file );
+
+				// Exit
+				return number;
+			}
+		}
+		else
+		{
+			previous_character = character;
+		}
+	}
+
+	// Free the buffer
+	free( buffer );
+
+	// Close the file
+	fclose( file );
+
+	return 0;
 }

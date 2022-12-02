@@ -49,8 +49,8 @@ int main()
 	// [0] = slave server, [1] = client server
 	int32_t server_pids[NUMBER_OF_SERVERS];
 
-	// printf( "Starting slave server\n" );
-	// server_pids[0] = start_subprocess( slave_server );
+	printf( "Starting slave server\n" );
+	server_pids[0] = start_subprocess( slave_server );
 
 	printf( "Starting client server\n" );
 	server_pids[1] = start_subprocess( client_server );
@@ -165,7 +165,7 @@ void client_server()
 	
 	printf( "Binding Connection for Clients\n" );
 
-	status_code = bind_connection( &socket_descriptor, "192.136.60.133", 1235 ); // change
+	status_code = bind_connection( &socket_descriptor, "192.168.0.1", 1235 ); // change
 
 	// Check that the binding was sucessfull
 	if ( !status_code )
