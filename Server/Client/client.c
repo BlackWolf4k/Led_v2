@@ -581,9 +581,6 @@ uint8_t download_animation( int32_t socket_descriptor )
 		bzero( buffer, BUFFER_SIZE * sizeof( uint8_t ) );
 	}
 
-	buffer[0] = 1;
-	send( socket_descriptor, buffer, 1, 0 );
-
 	// Update the slave
 	slave_t slave = get_slave( slave_id );
 
