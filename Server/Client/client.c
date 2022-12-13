@@ -581,24 +581,16 @@ uint8_t download_animation( int32_t socket_descriptor )
 		bzero( buffer, BUFFER_SIZE * sizeof( uint8_t ) );
 	}
 
-	printf( "fffff\n\n");
-
 	buffer[0] = 1;
 	send( socket_descriptor, buffer, 1, 0 );
 
 	// Update the slave
 	slave_t slave = get_slave( slave_id );
 
-	printf( "oooo\n\n");
-
 	if ( forced )
 		slave.actual_animation = add_animation( filename, slave.animation_list );
 
-	printf( "ggggg\n\n");
-
 	update_slave( slave );
-
-	printf( "ssssss\n\n");
 
 	// Close the file
 	fclose( file );
@@ -685,7 +677,7 @@ uint8_t add_animation( char* filename, int32_t animation_list )
 					position = ftell( file );
 					printf( "Position: %d", position);
 					fwrite( filename, sizeof( uint8_t ), strlen( filename ), file );
-					fwrite( ';', sizeof( uint8_t ), 1, file );
+					fwrite( ";", sizeof( uint8_t ), 1, file );
 					break;
 				}
 				else if ( character == ';' )
