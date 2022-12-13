@@ -147,7 +147,7 @@ void* handle_slave( void* socket_descriptor )
 	// Check that the sending was sucessfull
 	if ( send_file( file_name + 1, *( int32_t* )socket_descriptor ) )
 	{
-		printf( "Error while sending the file to the slave" );
+		printf( "Error while sending the file to the slave\n" );
 		exit( 1 );
 	}
 
@@ -264,7 +264,7 @@ uint8_t update_slave( slave_t updated_slave )
 
 			// Write the updated slave
 			// Check that the writing was sucessfull
-			if ( fwrite( &slave, sizeof( slave_t ), 1, file ) != 1 )
+			if ( fwrite( &updated_slave, sizeof( slave_t ), 1, file ) != 1 )
 				printf( "Something went wrong while updating the slaves informations\n" );
 
 			// Unlock
@@ -347,8 +347,9 @@ char* get_next_animation( uint32_t animation_list_id, uint32_t animation_number 
 					animations += 1;
 			
 			// Check that there are enought animation
-			if ( animations - 1 < animation_number )
+			if ( animations - 1 <= animation_number )
 			{
+				printf( "Animation number too high, looking for: %hhu, max: %d", animations, animation_number );
 				// Set the animation to search to the first one ( number 0 )
 				animation_number = 0;
 				/*
